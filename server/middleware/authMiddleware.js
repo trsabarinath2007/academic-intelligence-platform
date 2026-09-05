@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
+// Authentication Middleware
 const protect = async (req, res, next) => {
   let token;
 
@@ -32,4 +33,20 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+
+// Role Authorization Middleware
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to access this resource",
+      });
+    }
+
+    next();
+  };
+};
+
+
+module.exports = { protect, authorize };
