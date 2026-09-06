@@ -7,6 +7,7 @@ const healthRoutes = require("./routes/healthRoutes");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const studentRoutes = require("./routes/studentRoutes");
+const courseRoutes = require("./routes/courseRoutes");
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/students", studentRoutes);
+app.use("/api/courses", courseRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
