@@ -5,7 +5,6 @@ const createStudentProfile = async (req, res) => {
   try {
     const { studentId, department, semester, section } = req.body;
 
-    // Check required fields
     if (!studentId || !department || !semester) {
       return res.status(400).json({
         success: false,
@@ -13,7 +12,6 @@ const createStudentProfile = async (req, res) => {
       });
     }
 
-    // Check if student profile already exists
     const existingStudent = await Student.findOne({
       user: req.user._id,
     });
@@ -25,7 +23,6 @@ const createStudentProfile = async (req, res) => {
       });
     }
 
-    // Check if student ID already exists
     const existingStudentId = await Student.findOne({
       studentId,
     });
@@ -37,7 +34,6 @@ const createStudentProfile = async (req, res) => {
       });
     }
 
-    // Create student profile
     const student = await Student.create({
       user: req.user._id,
       studentId,
@@ -60,6 +56,37 @@ const createStudentProfile = async (req, res) => {
   }
 };
 
+
+// Get Student Profile
+const getStudentProfile = async (req, res) => {
+  try {
+    const student = await Student.findOne({
+      user: req.user._id,
+    }).populate("user", "name email role");
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student profile not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      student,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to get student profile",
+      error: error.message,
+    });
+  }
+};
+
+
+// Export both functions at the END
 module.exports = {
   createStudentProfile,
+  getStudentProfile,
 };
