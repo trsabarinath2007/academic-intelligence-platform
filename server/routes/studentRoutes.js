@@ -6,6 +6,10 @@ const {
 } = require("../controllers/studentController");
 
 const {
+  getMyDashboard,
+} = require("../controllers/studentDashboardController");
+
+const {
   protect,
   authorize,
 } = require("../middleware/authMiddleware");
@@ -26,6 +30,14 @@ router.get(
   protect,
   authorize("student"),
   getStudentProfile
+);
+
+// Logged-in Student Dashboard
+router.get(
+  "/dashboard",
+  protect,
+  authorize("student"),
+  getMyDashboard
 );
 
 module.exports = router;
