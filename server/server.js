@@ -10,6 +10,7 @@ const studentRoutes = require("./routes/studentRoutes");
 const courseRoutes = require("./routes/courseRoutes");
 const academicRecordRoutes = require("./routes/academicRecordRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
+const attendanceRoutes = require("./routes/attendanceRoutes");
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use("/api/students", studentRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/academic-records", academicRecordRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
