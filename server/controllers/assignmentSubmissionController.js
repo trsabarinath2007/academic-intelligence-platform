@@ -7,7 +7,6 @@ const submitAssignment = async (req, res) => {
   try {
     const { assignmentId, submissionText } = req.body;
 
-    // Validate fields
     if (!assignmentId || !submissionText) {
       return res.status(400).json({
         success: false,
@@ -15,7 +14,6 @@ const submitAssignment = async (req, res) => {
       });
     }
 
-    // Check assignment
     const assignment = await Assignment.findById(assignmentId);
 
     if (!assignment) {
@@ -25,7 +23,6 @@ const submitAssignment = async (req, res) => {
       });
     }
 
-    // Get student profile of logged-in user
     const student = await Student.findOne({
       user: req.user._id,
     });
@@ -37,7 +34,6 @@ const submitAssignment = async (req, res) => {
       });
     }
 
-    // Check duplicate submission
     const existingSubmission = await AssignmentSubmission.findOne({
       assignment: assignmentId,
       student: student._id,
@@ -50,14 +46,12 @@ const submitAssignment = async (req, res) => {
       });
     }
 
-    // Check if submission is late
     let status = "Submitted";
 
     if (new Date() > assignment.dueDate) {
       status = "Late";
     }
 
-    // Create submission
     const submission = await AssignmentSubmission.create({
       assignment: assignmentId,
       student: student._id,
@@ -121,7 +115,63 @@ const getMySubmissions = async (req, res) => {
   }
 };
 
+
+// Grade Assignment Submission
+const gradeSubmission = async (req, res) => {
+  try {
+    const { submissionId } = req.params;
+    const { marksObtained, feedback } = req.body;
+
+    if (marksObtained === undefined || marksObtained === null) {
+      return res.status(400).json({
+        success: false,
+        message: "Marks obtained are required",
+      });
+    }
+
+    const submission = await AssignmentSubmission.findById(submissionId)
+      .populate("assignment", "totalMarks");
+
+    if (!submission) {
+      return res.status(404).json({
+        success: false,
+        message: "Submission not found",
+      });
+    }
+
+    if (
+      marksObtained < 0 ||
+      marksObtained > submission.assignment.totalMarks
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Marks must be between 0 and ${submission.assignment.totalMarks}`,
+      });
+    }
+
+    submission.marksObtained = marksObtained;
+    submission.feedback = feedback || "";
+    submission.status = "Graded";
+
+    await submission.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Assignment graded successfully",
+      submission,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to grade assignment",
+      error: error.message,
+    });
+  }
+};
+
+
 module.exports = {
   submitAssignment,
   getMySubmissions,
+  gradeSubmission,
 };
