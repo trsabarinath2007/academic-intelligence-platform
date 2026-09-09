@@ -3,7 +3,6 @@ const QuizAttempt = require("../models/QuizAttempt");
 const Course = require("../models/Course");
 const Student = require("../models/Student");
 
-
 // Create Quiz
 const createQuiz = async (req, res) => {
   try {
@@ -220,9 +219,54 @@ const attemptQuiz = async (req, res) => {
 };
 
 
+// Get My Quiz Attempts
+const getMyQuizAttempts = async (req, res) => {
+  try {
+    // Find student profile
+    const student = await Student.findOne({
+      user: req.user._id,
+    });
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student profile not found",
+      });
+    }
+
+    // Get all quiz attempts of the student
+    const attempts = await QuizAttempt.find({
+      student: student._id,
+    })
+      .populate({
+        path: "quiz",
+        select: "title description totalMarks duration",
+        populate: {
+          path: "course",
+          select: "courseCode courseName",
+        },
+      })
+      .sort({ attemptedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: attempts.length,
+      attempts,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to get quiz attempts",
+      error: error.message,
+    });
+  }
+};
+
+
 module.exports = {
   createQuiz,
   getAllQuizzes,
   getQuizById,
   attemptQuiz,
+  getMyQuizAttempts,
 };
