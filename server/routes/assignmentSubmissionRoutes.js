@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   submitAssignment,
   getMySubmissions,
+  gradeSubmission,
 } = require("../controllers/assignmentSubmissionController");
 
 const {
@@ -25,6 +26,13 @@ router.get(
   protect,
   authorize("student"),
   getMySubmissions
+);
+
+// Grade Assignment Submission
+router.put(
+  "/:submissionId/grade",
+  protect,
+  gradeSubmission
 );
 
 module.exports = router;
