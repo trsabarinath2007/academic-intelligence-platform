@@ -39,18 +39,124 @@ const getStudentDashboard = async (req, res) => {
       student: student._id,
     });
 
+    // =========================
+    // CALCULATE GPA
+    // =========================
+
+    const gradePoints = {
+      "A+": 10,
+      A: 9,
+      "B+": 8,
+      B: 7,
+      "C+": 6,
+      C: 5,
+      D: 4,
+      F: 0,
+    };
+
+    let totalCredits = 0;
+    let totalWeightedPoints = 0;
+
+    academicRecords.forEach((record) => {
+      if (record.course) {
+        const credits = record.course.credits;
+        const gradePoint = gradePoints[record.grade] || 0;
+
+        totalCredits += credits;
+        totalWeightedPoints += gradePoint * credits;
+      }
+    });
+
+    const gpa =
+      totalCredits > 0
+        ? Number((totalWeightedPoints / totalCredits).toFixed(2))
+        : 0;
+
+    // =========================
+    // CALCULATE ATTENDANCE
+    // =========================
+
+    const totalClasses = attendanceRecords.length;
+
+    const presentClasses = attendanceRecords.filter(
+      (record) => record.status === "Present"
+    ).length;
+
+    const attendancePercentage =
+      totalClasses > 0
+        ? Number(
+            ((presentClasses / totalClasses) * 100).toFixed(2)
+          )
+        : 0;
+
+    // =========================
+    // CALCULATE AVERAGE QUIZ SCORE
+    // =========================
+
+    let averageQuizPercentage = 0;
+
+    if (quizAttempts.length > 0) {
+      const totalQuizPercentage = quizAttempts.reduce(
+        (sum, attempt) => sum + attempt.percentage,
+        0
+      );
+
+      averageQuizPercentage = Number(
+        (totalQuizPercentage / quizAttempts.length).toFixed(2)
+      );
+    }
+
+    // =========================
+    // PERFORMANCE STATUS
+    // =========================
+
+    let performanceStatus;
+
+    if (gpa >= 9) {
+      performanceStatus = "Excellent";
+    } else if (gpa >= 7) {
+      performanceStatus = "Good";
+    } else if (gpa >= 5) {
+      performanceStatus = "Average";
+    } else {
+      performanceStatus = "Needs Improvement";
+    }
+
+    // =========================
+    // RESPONSE
+    // =========================
+
     res.status(200).json({
       success: true,
       message: "Student dashboard data fetched successfully",
-      data: {
-        studentId: student.studentId,
-        department: student.department,
-        semester: student.semester,
 
-        academicRecords: academicRecords.length,
-        attendanceRecords: attendanceRecords.length,
-        assignmentsSubmitted: assignmentSubmissions.length,
-        quizzesAttempted: quizAttempts.length,
+      data: {
+        student: {
+          studentId: student.studentId,
+          department: student.department,
+          semester: student.semester,
+        },
+
+        academics: {
+          totalSubjects: academicRecords.length,
+          gpa,
+          performanceStatus,
+        },
+
+        attendance: {
+          totalClasses,
+          presentClasses,
+          attendancePercentage,
+        },
+
+        assignments: {
+          submitted: assignmentSubmissions.length,
+        },
+
+        quizzes: {
+          attempted: quizAttempts.length,
+          averagePercentage: averageQuizPercentage,
+        },
       },
     });
   } catch (error) {
