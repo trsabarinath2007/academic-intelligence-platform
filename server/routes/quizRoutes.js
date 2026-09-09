@@ -5,6 +5,7 @@ const {
   getAllQuizzes,
   getQuizById,
   attemptQuiz,
+  getMyQuizAttempts,
 } = require("../controllers/quizController");
 
 const {
@@ -14,14 +15,13 @@ const {
 
 const router = express.Router();
 
-
 // Create Quiz
 router.post(
   "/",
   protect,
+  authorize("student"),
   createQuiz
 );
-
 
 // Get All Quizzes
 router.get(
@@ -30,14 +30,20 @@ router.get(
   getAllQuizzes
 );
 
+// Get My Quiz Attempts
+router.get(
+  "/my-attempts",
+  protect,
+  authorize("student"),
+  getMyQuizAttempts
+);
 
-// Get Quiz By ID
+// Get Quiz by ID
 router.get(
   "/:id",
   protect,
   getQuizById
 );
-
 
 // Attempt Quiz
 router.post(
@@ -46,6 +52,5 @@ router.post(
   authorize("student"),
   attemptQuiz
 );
-
 
 module.exports = router;
