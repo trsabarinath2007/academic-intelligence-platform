@@ -107,11 +107,71 @@ const getOverallPerformance = async (req, res) => {
       });
     }
 
-    res.status(200).json({
-      success: true,
-      count: performance.length,
-      performance,
-    });
+   // -------------------------
+// Overall Summary
+// -------------------------
+
+const totalStudents = performance.length;
+
+const averageGPA =
+  totalStudents > 0
+    ? Number(
+        (
+          performance.reduce(
+            (sum, student) => sum + student.gpa,
+            0
+          ) / totalStudents
+        ).toFixed(2)
+      )
+    : 0;
+
+const averageAttendance =
+  totalStudents > 0
+    ? Number(
+        (
+          performance.reduce(
+            (sum, student) =>
+              sum + student.attendancePercentage,
+            0
+          ) / totalStudents
+        ).toFixed(2)
+      )
+    : 0;
+
+const averageQuizScore =
+  totalStudents > 0
+    ? Number(
+        (
+          performance.reduce(
+            (sum, student) => sum + student.quizAverage,
+            0
+          ) / totalStudents
+        ).toFixed(2)
+      )
+    : 0;
+
+const highPerformers = performance.filter(
+  (student) => student.gpa >= 9
+).length;
+
+const studentsNeedingImprovement = performance.filter(
+  (student) => student.gpa < 7
+).length;
+
+res.status(200).json({
+  success: true,
+
+  summary: {
+    totalStudents,
+    averageGPA,
+    averageAttendance,
+    averageQuizScore,
+    highPerformers,
+    studentsNeedingImprovement,
+  },
+
+  performance,
+});
   } catch (error) {
     res.status(500).json({
       success: false,
