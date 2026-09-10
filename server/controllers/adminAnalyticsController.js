@@ -181,6 +181,7 @@ res.status(200).json({
   atRiskStudents: atRiskStudents.length,
 },
   performance,
+atRiskStudents,
 });
   } catch (error) {
     res.status(500).json({
