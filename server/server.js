@@ -16,6 +16,7 @@ const assignmentSubmissionRoutes = require("./routes/assignmentSubmissionRoutes"
 const quizRoutes = require("./routes/quizRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const insightRoutes = require("./routes/insightRoutes");
+const riskRoutes = require("./routes/riskRoutes");
 
 dotenv.config();
 
@@ -42,7 +43,7 @@ app.use("/api/submissions", assignmentSubmissionRoutes);
 app.use("/api/quizzes", quizRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/insights", insightRoutes);
-
+app.use("/api/risk", riskRoutes);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
