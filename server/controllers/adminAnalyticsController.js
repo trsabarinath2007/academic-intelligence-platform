@@ -172,14 +172,14 @@ res.status(200).json({
   success: true,
 
   summary: {
-    totalStudents,
-    averageGPA,
-    averageAttendance,
-    averageQuizScore,
-    highPerformers,
-    studentsNeedingImprovement,
-  },
-
+  totalStudents,
+  averageGPA,
+  averageAttendance,
+  averageQuizScore,
+  highPerformers,
+  studentsNeedingImprovement,
+  atRiskStudents: atRiskStudents.length,
+},
   performance,
 });
   } catch (error) {
