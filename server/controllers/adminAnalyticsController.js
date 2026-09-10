@@ -155,8 +155,18 @@ const highPerformers = performance.filter(
 ).length;
 
 const studentsNeedingImprovement = performance.filter(
-  (student) => student.gpa < 7
+  (student) =>
+    student.gpa < 7 ||
+    student.attendancePercentage < 75 ||
+    student.quizAverage < 75
 ).length;
+
+const atRiskStudents = performance.filter(
+  (student) =>
+    student.gpa < 7 ||
+    student.attendancePercentage < 75 ||
+    student.quizAverage < 75
+);
 
 res.status(200).json({
   success: true,
