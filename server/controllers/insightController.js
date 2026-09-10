@@ -149,20 +149,29 @@ const getStudentInsights = async (req, res) => {
     // Response
     // -------------------------
 
-    res.status(200).json({
-      success: true,
-      student: {
-        studentId: student.studentId,
-        department: student.department,
-        semester: student.semester,
-      },
+  res.status(200).json({
+  success: true,
+  student: {
+    studentId: student.studentId,
+    department: student.department,
+    semester: student.semester,
+  },
 
-      insights: {
-        strengths,
-        weaknesses,
-        recommendations,
-      },
-    });
+  insights: {
+    strengths,
+    weaknesses,
+    recommendations,
+
+    summary: {
+      academicRecords: academicRecords.length,
+      attendancePercentage: Number(
+        attendancePercentage.toFixed(2)
+      ),
+      quizzesAttempted: quizAttempts.length,
+      assignmentsSubmitted: assignmentSubmissions.length,
+    },
+  },
+});
   } catch (error) {
     res.status(500).json({
       success: false,
