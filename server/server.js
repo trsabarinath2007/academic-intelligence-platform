@@ -20,6 +20,7 @@ const riskRoutes = require("./routes/riskRoutes");
 const adminAnalyticsRoutes = require("./routes/adminAnalyticsRoutes");
 const trendRoutes = require("./routes/trendRoutes");
 const coursePerformanceRoutes = require("./routes/coursePerformanceRoutes");
+const courseAttendanceRoutes = require("./routes/courseAttendanceRoutes");
 dotenv.config();
 
 connectDB();
