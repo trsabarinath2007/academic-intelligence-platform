@@ -18,6 +18,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const insightRoutes = require("./routes/insightRoutes");
 const riskRoutes = require("./routes/riskRoutes");
 const adminAnalyticsRoutes = require("./routes/adminAnalyticsRoutes");
+const trendRoutes = require("./routes/trendRoutes");
 
 dotenv.config();
 
