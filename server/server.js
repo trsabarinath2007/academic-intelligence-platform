@@ -53,6 +53,10 @@ app.use(
   "/api/course-performance",
   coursePerformanceRoutes
 );
+app.use(
+  "/api/course-attendance",
+  courseAttendanceRoutes
+);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
