@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 // REGISTER USER
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -23,13 +23,24 @@ const registerUser = async (req, res) => {
       });
     }
 
+    const allowedRoles = ["student", "faculty", "admin"];
+
+    const userRole = role || "student";
+
+    if (!allowedRoles.includes(userRole)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role",
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      role: "student",
+      role: userRole,
     });
 
     res.status(201).json({
@@ -114,4 +125,56 @@ const loginUser = async (req, res) => {
 };
 
 
-module.exports = { registerUser, loginUser };
+// RESET USER PASSWORD
+const resetUserPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and new password are required",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Password reset failed",
+      error: error.message,
+    });
+  }
+};
+
+
+module.exports = {
+  registerUser,
+  loginUser,
+  resetUserPassword,
+};
