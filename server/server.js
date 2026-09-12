@@ -48,6 +48,10 @@ app.use("/api/insights", insightRoutes);
 app.use("/api/risk", riskRoutes);
 app.use("/api/admin-analytics", adminAnalyticsRoutes);
 app.use("/api/trends", trendRoutes);
+app.use(
+  "/api/course-performance",
+  coursePerformanceRoutes
+);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
