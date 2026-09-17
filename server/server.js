@@ -21,6 +21,7 @@ const adminAnalyticsRoutes = require("./routes/adminAnalyticsRoutes");
 const trendRoutes = require("./routes/trendRoutes");
 const coursePerformanceRoutes = require("./routes/coursePerformanceRoutes");
 const courseAttendanceRoutes = require("./routes/courseAttendanceRoutes");
+const quizPerformanceRoutes = require("./routes/quizPerformanceRoutes");
 dotenv.config();
 
 connectDB();
