@@ -14,6 +14,7 @@ const StudentDashboard = () => {
   const [analytics, setAnalytics] = useState(null);
   const [coursePerformance, setCoursePerformance] = useState([]);
   const [courseAttendance, setCourseAttendance] = useState([]);
+  const [quizPerformance, setQuizPerformance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
