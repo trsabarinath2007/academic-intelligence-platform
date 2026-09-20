@@ -65,6 +65,10 @@ app.use(
   "/api/quiz-performance",
   quizPerformanceRoutes
 );
+app.use(
+  "/api/assignment-performance",
+  assignmentPerformanceRoutes
+);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
