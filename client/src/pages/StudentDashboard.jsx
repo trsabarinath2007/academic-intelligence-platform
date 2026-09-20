@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-
 import {
   BarChart,
   Bar,
@@ -7,134 +6,166 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
 } from "recharts";
 
-const StudentDashboard = () => {
+function StudentDashboard() {
   const [analytics, setAnalytics] = useState(null);
   const [coursePerformance, setCoursePerformance] = useState([]);
   const [courseAttendance, setCourseAttendance] = useState([]);
   const [quizPerformance, setQuizPerformance] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchAnalytics();
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          throw new Error("Please login first.");
+        }
+
+        // --------------------------------
+        // 1. Student Analytics
+        // --------------------------------
+        const analyticsResponse = await fetch(
+          "http://localhost:5000/api/student-analytics/student",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const analyticsData = await analyticsResponse.json();
+
+        if (!analyticsResponse.ok) {
+          throw new Error(
+            analyticsData.message ||
+              "Failed to fetch student analytics"
+          );
+        }
+
+        setAnalytics(analyticsData);
+
+        // --------------------------------
+        // 2. Course Performance
+        // --------------------------------
+        const performanceResponse = await fetch(
+          "http://localhost:5000/api/course-performance/student",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const performanceData =
+          await performanceResponse.json();
+
+        if (!performanceResponse.ok) {
+          throw new Error(
+            performanceData.message ||
+              "Failed to fetch course performance"
+          );
+        }
+
+        setCoursePerformance(
+          performanceData.coursePerformance || []
+        );
+
+        // --------------------------------
+        // 3. Course Attendance
+        // --------------------------------
+        const attendanceResponse = await fetch(
+          "http://localhost:5000/api/course-attendance/student",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const attendanceData =
+          await attendanceResponse.json();
+
+        if (!attendanceResponse.ok) {
+          throw new Error(
+            attendanceData.message ||
+              "Failed to fetch course attendance"
+          );
+        }
+
+        setCourseAttendance(
+          attendanceData.courseAttendance || []
+        );
+
+        // --------------------------------
+        // 4. Quiz Performance
+        // --------------------------------
+        const quizResponse = await fetch(
+          "http://localhost:5000/api/quiz-performance/student",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const quizData = await quizResponse.json();
+
+        if (!quizResponse.ok) {
+          throw new Error(
+            quizData.message ||
+              "Failed to fetch quiz performance"
+          );
+        }
+
+        setQuizPerformance(
+          quizData.quizPerformance || []
+        );
+      } catch (error) {
+        console.error(error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
   }, []);
 
-  const fetchAnalytics = async () => {
-    try {
-      const token = localStorage.getItem("token");
-
-      // ==========================================
-      // 1. STUDENT ANALYTICS
-      // ==========================================
-
-      const response = await fetch(
-        "http://localhost:5000/api/student-analytics/student",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Failed to fetch analytics"
-        );
-      }
-
-      setAnalytics(data);
-
-      // ==========================================
-      // 2. COURSE PERFORMANCE
-      // ==========================================
-
-      const courseResponse = await fetch(
-        "http://localhost:5000/api/course-performance/student",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const courseData = await courseResponse.json();
-
-      if (!courseResponse.ok) {
-        throw new Error(
-          courseData.message ||
-            "Failed to fetch course performance"
-        );
-      }
-
-      setCoursePerformance(
-        courseData.coursePerformance || []
-      );
-
-      // ==========================================
-      // 3. COURSE ATTENDANCE
-      // ==========================================
-
-      const attendanceResponse = await fetch(
-        "http://localhost:5000/api/course-attendance/student",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const attendanceData =
-        await attendanceResponse.json();
-
-      if (!attendanceResponse.ok) {
-        throw new Error(
-          attendanceData.message ||
-            "Failed to fetch course attendance"
-        );
-      }
-
-      setCourseAttendance(
-        attendanceData.courseAttendance || []
-      );
-
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ==========================================
-  // LOADING
-  // ==========================================
-
+  // --------------------------------
+  // Loading
+  // --------------------------------
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <p className="text-lg text-gray-600">
+        <p className="text-lg font-semibold text-gray-600">
           Loading dashboard...
         </p>
       </div>
     );
   }
 
-  // ==========================================
-  // ERROR
-  // ==========================================
-
+  // --------------------------------
+  // Error
+  // --------------------------------
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="rounded-xl bg-white p-8 shadow">
-          <p className="text-lg text-red-600">
+      <div className="flex min-h-screen items-center justify-center bg-gray-100 p-6">
+        <div className="rounded-xl bg-white p-8 shadow-lg">
+          <h1 className="mb-2 text-xl font-bold text-red-600">
+            Error
+          </h1>
+
+          <p className="text-gray-600">
             {error}
           </p>
         </div>
@@ -142,194 +173,213 @@ const StudentDashboard = () => {
     );
   }
 
+  // --------------------------------
+  // Dashboard data
+  // --------------------------------
+  const student = analytics?.student;
+  const academics = analytics?.academics;
+  const attendance = analytics?.attendance;
+  const quizzes = analytics?.quizzes;
+  const assignments = analytics?.assignments;
+  const riskAssessment = analytics?.riskAssessment;
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
 
-      {/* ========================================
-          HEADER
-      ======================================== */}
-
+      {/* --------------------------------
+          Header
+      -------------------------------- */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">
           Student Dashboard
         </h1>
 
         <p className="mt-1 text-gray-500">
-          Welcome back, {analytics.student.studentId} 👋
+          Academic Intelligence Platform
         </p>
       </div>
 
-      {/* ========================================
-          SUMMARY CARDS
-      ======================================== */}
+      {/* --------------------------------
+          Student Information
+      -------------------------------- */}
+      <div className="mb-8 rounded-xl bg-white p-6 shadow">
+        <h2 className="mb-4 text-xl font-bold text-gray-800">
+          Student Information
+        </h2>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3">
+
+          <div>
+            <p className="text-sm text-gray-500">
+              Student ID
+            </p>
+
+            <p className="font-semibold text-gray-800">
+              {student?.studentId || "-"}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-gray-500">
+              Department
+            </p>
+
+            <p className="font-semibold text-gray-800">
+              {student?.department || "-"}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-gray-500">
+              Semester
+            </p>
+
+            <p className="font-semibold text-gray-800">
+              {student?.semester || "-"}
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      {/* --------------------------------
+          Summary Cards
+      -------------------------------- */}
+      <div className="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
 
         {/* GPA */}
-
         <div className="rounded-xl bg-white p-6 shadow">
-
           <p className="text-sm text-gray-500">
-            Current GPA
+            GPA
           </p>
 
           <h2 className="mt-2 text-3xl font-bold text-blue-600">
-            {analytics.academics.gpa}
+            {academics?.gpa ?? "-"}
           </h2>
 
-          <p className="mt-2 text-sm text-gray-500">
-            {analytics.academics.performanceStatus} Performance
+          <p className="mt-1 text-sm text-gray-500">
+            {academics?.performanceStatus || "-"}
           </p>
-
         </div>
 
-        {/* ATTENDANCE */}
-
+        {/* Attendance */}
         <div className="rounded-xl bg-white p-6 shadow">
-
           <p className="text-sm text-gray-500">
             Attendance
           </p>
 
-          <h2 className="mt-2 text-3xl font-bold text-red-500">
-            {analytics.attendance.attendancePercentage}%
+          <h2 className="mt-2 text-3xl font-bold text-green-600">
+            {attendance?.attendancePercentage ?? 0}%
           </h2>
 
-          <p className="mt-2 text-sm text-gray-500">
-            Below 75%
+          <p className="mt-1 text-sm text-gray-500">
+            {attendance?.presentClasses ?? 0} /{" "}
+            {attendance?.totalClasses ?? 0} classes
           </p>
-
         </div>
 
-        {/* QUIZ */}
-
+        {/* Quizzes */}
         <div className="rounded-xl bg-white p-6 shadow">
-
           <p className="text-sm text-gray-500">
             Quiz Average
           </p>
 
-          <h2 className="mt-2 text-3xl font-bold text-green-600">
-            {analytics.quizzes.averagePercentage}%
+          <h2 className="mt-2 text-3xl font-bold text-purple-600">
+            {quizzes?.averagePercentage ?? 0}%
           </h2>
 
-          <p className="mt-2 text-sm text-gray-500">
-            Good
+          <p className="mt-1 text-sm text-gray-500">
+            {quizzes?.attempted ?? 0} attempted
           </p>
-
         </div>
 
-        {/* ASSIGNMENT */}
-
+        {/* Assignments */}
         <div className="rounded-xl bg-white p-6 shadow">
-
           <p className="text-sm text-gray-500">
             Assignment Average
           </p>
 
-          <h2 className="mt-2 text-3xl font-bold text-purple-600">
-            {analytics.assignments.averagePercentage}%
+          <h2 className="mt-2 text-3xl font-bold text-orange-600">
+            {assignments?.averagePercentage ?? 0}%
           </h2>
 
-          <p className="mt-2 text-sm text-gray-500">
-            Excellent
+          <p className="mt-1 text-sm text-gray-500">
+            {assignments?.graded ?? 0} graded
           </p>
-
         </div>
 
       </div>
 
-      {/* ========================================
-          RISK ASSESSMENT
-      ======================================== */}
+      {/* --------------------------------
+          Risk Assessment
+      -------------------------------- */}
+      <div className="mb-8 rounded-xl bg-white p-6 shadow">
 
-      <div className="mt-8 rounded-xl bg-white p-6 shadow">
-
-        <h2 className="text-xl font-semibold text-gray-800">
+        <h2 className="mb-4 text-xl font-bold text-gray-800">
           Risk Assessment
         </h2>
 
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
           <div>
-
             <p className="text-sm text-gray-500">
-              Current Risk Level
+              Risk Level
             </p>
 
-            <p className="mt-1 text-2xl font-bold text-green-600">
-              {analytics.riskAssessment.riskLevel}
+            <p className="text-2xl font-bold text-red-600">
+              {riskAssessment?.riskLevel || "-"}
             </p>
-
           </div>
 
-          <div className="text-right">
-
+          <div>
             <p className="text-sm text-gray-500">
               Risk Score
             </p>
 
-            <p className="mt-1 text-2xl font-bold text-gray-800">
-              {analytics.riskAssessment.riskScore} / 100
+            <p className="text-2xl font-bold text-gray-800">
+              {riskAssessment?.riskScore ?? 0}
             </p>
-
           </div>
 
         </div>
 
-        {/* RISK FACTORS */}
-
-        {analytics.riskAssessment.riskFactors.length > 0 && (
-
-          <div className="mt-5 rounded-lg bg-yellow-50 p-4">
-
-            {analytics.riskAssessment.riskFactors.map(
-              (factor, index) => (
-
-                <p
-                  key={index}
-                  className="font-medium text-yellow-800"
-                >
-                  ⚠ {factor}
-                </p>
-
-              )
-            )}
-
-            <p className="mt-1 text-sm text-yellow-700">
-              Improve your attendance to reduce academic risk.
+        {riskAssessment?.riskFactors?.length > 0 && (
+          <div>
+            <p className="mb-2 font-semibold text-gray-700">
+              Risk Factors
             </p>
 
+            <ul className="list-disc pl-5 text-gray-600">
+              {riskAssessment.riskFactors.map(
+                (factor, index) => (
+                  <li key={index}>
+                    {factor}
+                  </li>
+                )
+              )}
+            </ul>
           </div>
-
         )}
 
       </div>
 
-      {/* ========================================
-          COURSE PERFORMANCE
-      ======================================== */}
+      {/* --------------------------------
+          Course Performance Chart
+      -------------------------------- */}
+      <div className="mb-8 rounded-xl bg-white p-6 shadow">
 
-      <div className="mt-8 rounded-xl bg-white p-6 shadow">
-
-        <h2 className="mb-6 text-xl font-semibold text-gray-800">
+        <h2 className="mb-4 text-xl font-bold text-gray-800">
           Course Performance
         </h2>
 
-        <div className="h-80 w-full">
-
+        {coursePerformance.length > 0 ? (
           <ResponsiveContainer
             width="100%"
-            height="100%"
+            height={350}
           >
+            <BarChart data={coursePerformance}>
 
-            <BarChart
-              data={coursePerformance}
-            >
-
-              <CartesianGrid
-                strokeDasharray="3 3"
-              />
+              <CartesianGrid strokeDasharray="3 3" />
 
               <XAxis
                 dataKey="courseCode"
@@ -340,46 +390,42 @@ const StudentDashboard = () => {
               />
 
               <Tooltip />
+
+              <Legend />
 
               <Bar
                 dataKey="totalMarks"
-                fill="#2563eb"
-                name="Marks"
-                radius={[6, 6, 0, 0]}
+                name="Total Marks"
+                fill="#3b82f6"
               />
 
             </BarChart>
-
           </ResponsiveContainer>
-
-        </div>
+        ) : (
+          <p className="text-gray-500">
+            No course performance data available.
+          </p>
+        )}
 
       </div>
 
-      {/* ========================================
-          ATTENDANCE BY COURSE
-      ======================================== */}
+      {/* --------------------------------
+          Attendance by Course
+      -------------------------------- */}
+      <div className="mb-8 rounded-xl bg-white p-6 shadow">
 
-      <div className="mt-8 rounded-xl bg-white p-6 shadow">
-
-        <h2 className="mb-6 text-xl font-semibold text-gray-800">
+        <h2 className="mb-4 text-xl font-bold text-gray-800">
           Attendance by Course
         </h2>
 
-        <div className="h-80 w-full">
-
+        {courseAttendance.length > 0 ? (
           <ResponsiveContainer
             width="100%"
-            height="100%"
+            height={350}
           >
+            <BarChart data={courseAttendance}>
 
-            <BarChart
-              data={courseAttendance}
-            >
-
-              <CartesianGrid
-                strokeDasharray="3 3"
-              />
+              <CartesianGrid strokeDasharray="3 3" />
 
               <XAxis
                 dataKey="courseCode"
@@ -391,133 +437,152 @@ const StudentDashboard = () => {
 
               <Tooltip />
 
+              <Legend />
+
               <Bar
                 dataKey="attendancePercentage"
-                fill="#16a34a"
                 name="Attendance %"
-                radius={[6, 6, 0, 0]}
+                fill="#22c55e"
               />
 
             </BarChart>
-
           </ResponsiveContainer>
+        ) : (
+          <p className="text-gray-500">
+            No attendance data available.
+          </p>
+        )}
+
+      </div>
+
+      {/* --------------------------------
+          Quiz Performance Chart
+      -------------------------------- */}
+      <div className="mb-8 rounded-xl bg-white p-6 shadow">
+
+        <h2 className="mb-4 text-xl font-bold text-gray-800">
+          Quiz Performance
+        </h2>
+
+        {quizPerformance.length > 0 ? (
+          <ResponsiveContainer
+            width="100%"
+            height={350}
+          >
+            <BarChart data={quizPerformance}>
+
+              <CartesianGrid strokeDasharray="3 3" />
+
+              <XAxis
+                dataKey="courseCode"
+              />
+
+              <YAxis
+                domain={[0, 100]}
+              />
+
+              <Tooltip />
+
+              <Legend />
+
+              <Bar
+                dataKey="percentage"
+                name="Quiz Percentage"
+                fill="#8b5cf6"
+              />
+
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-gray-500">
+            No quiz performance data available.
+          </p>
+        )}
+
+      </div>
+
+      {/* --------------------------------
+          Academic Overview
+      -------------------------------- */}
+      <div className="mb-8 rounded-xl bg-white p-6 shadow">
+
+        <h2 className="mb-4 text-xl font-bold text-gray-800">
+          Academic Overview
+        </h2>
+
+        <div className="grid gap-4 md:grid-cols-3">
+
+          <div className="rounded-lg bg-gray-50 p-4">
+            <p className="text-sm text-gray-500">
+              Total Subjects
+            </p>
+
+            <p className="mt-1 text-2xl font-bold text-gray-800">
+              {academics?.totalSubjects ?? 0}
+            </p>
+          </div>
+
+          <div className="rounded-lg bg-gray-50 p-4">
+            <p className="text-sm text-gray-500">
+              Quizzes Attempted
+            </p>
+
+            <p className="mt-1 text-2xl font-bold text-gray-800">
+              {quizzes?.attempted ?? 0}
+            </p>
+          </div>
+
+          <div className="rounded-lg bg-gray-50 p-4">
+            <p className="text-sm text-gray-500">
+              Assignments Graded
+            </p>
+
+            <p className="mt-1 text-2xl font-bold text-gray-800">
+              {assignments?.graded ?? 0}
+            </p>
+          </div>
 
         </div>
 
       </div>
 
-      {/* ========================================
-          ACADEMIC OVERVIEW + QUICK ACTIONS
-      ======================================== */}
+      {/* --------------------------------
+          Quick Actions
+      -------------------------------- */}
+      <div className="rounded-xl bg-white p-6 shadow">
 
-      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <h2 className="mb-4 text-xl font-bold text-gray-800">
+          Quick Actions
+        </h2>
 
-        {/* ACADEMIC OVERVIEW */}
+        <div className="grid gap-4 md:grid-cols-3">
 
-        <div className="rounded-xl bg-white p-6 shadow">
+          <button
+            className="rounded-lg bg-blue-600 p-3 font-semibold text-white hover:bg-blue-700"
+            onClick={() =>
+              alert("Course performance selected")
+            }
+          >
+            View Course Performance
+          </button>
 
-          <h2 className="text-xl font-semibold text-gray-800">
-            Academic Overview
-          </h2>
+          <button
+            className="rounded-lg bg-green-600 p-3 font-semibold text-white hover:bg-green-700"
+            onClick={() =>
+              alert("Attendance selected")
+            }
+          >
+            View Attendance
+          </button>
 
-          <div className="mt-5 space-y-4">
-
-            {/* Subjects */}
-
-            <div className="flex justify-between">
-
-              <span className="text-gray-500">
-                Total Subjects
-              </span>
-
-              <span className="font-semibold">
-                {analytics.academics.totalSubjects}
-              </span>
-
-            </div>
-
-            {/* Quizzes */}
-
-            <div className="flex justify-between">
-
-              <span className="text-gray-500">
-                Quizzes Attempted
-              </span>
-
-              <span className="font-semibold">
-                {analytics.quizzes.attempted}
-              </span>
-
-            </div>
-
-            {/* Assignments */}
-
-            <div className="flex justify-between">
-
-              <span className="text-gray-500">
-                Assignments Graded
-              </span>
-
-              <span className="font-semibold">
-                {analytics.assignments.graded}
-              </span>
-
-            </div>
-
-            {/* Attendance */}
-
-            <div className="flex justify-between">
-
-              <span className="text-gray-500">
-                Classes Attended
-              </span>
-
-              <span className="font-semibold">
-                {analytics.attendance.presentClasses} /{" "}
-                {analytics.attendance.totalClasses}
-              </span>
-
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* QUICK ACTIONS */}
-
-        <div className="rounded-xl bg-white p-6 shadow">
-
-          <h2 className="text-xl font-semibold text-gray-800">
-            Quick Actions
-          </h2>
-
-          <div className="mt-5 grid grid-cols-2 gap-4">
-
-            <button
-              className="rounded-lg bg-blue-600 p-4 font-medium text-white hover:bg-blue-700"
-            >
-              View Courses
-            </button>
-
-            <button
-              className="rounded-lg bg-purple-600 p-4 font-medium text-white hover:bg-purple-700"
-            >
-              View Assignments
-            </button>
-
-            <button
-              className="rounded-lg bg-green-600 p-4 font-medium text-white hover:bg-green-700"
-            >
-              View Quizzes
-            </button>
-
-            <button
-              className="rounded-lg bg-gray-800 p-4 font-medium text-white hover:bg-gray-900"
-            >
-              View Insights
-            </button>
-
-          </div>
+          <button
+            className="rounded-lg bg-purple-600 p-3 font-semibold text-white hover:bg-purple-700"
+            onClick={() =>
+              alert("Quiz performance selected")
+            }
+          >
+            View Quiz Performance
+          </button>
 
         </div>
 
@@ -525,6 +590,6 @@ const StudentDashboard = () => {
 
     </div>
   );
-};
+}
 
 export default StudentDashboard;
