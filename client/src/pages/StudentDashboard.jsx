@@ -1,6 +1,64 @@
 import React, { useEffect, useState } from "react";
 
 const StudentDashboard = () => {
+  const [analytics, setAnalytics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
+
+  const fetchAnalytics = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(
+        "http://localhost:5000/api/student-analytics/student",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch analytics");
+      }
+
+      setAnalytics(data);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Loading
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-lg text-gray-600">
+          Loading dashboard...
+        </p>
+      </div>
+    );
+  }
+
+  // Error
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-lg text-red-600">
+          {error}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
 
@@ -11,7 +69,7 @@ const StudentDashboard = () => {
         </h1>
 
         <p className="mt-1 text-gray-500">
-          Welcome back, Test Student 👋
+          Welcome back, {analytics.student.studentId} 👋
         </p>
       </div>
 
@@ -25,11 +83,11 @@ const StudentDashboard = () => {
           </p>
 
           <h2 className="mt-2 text-3xl font-bold text-blue-600">
-            8.44
+            {analytics.academics.gpa}
           </h2>
 
           <p className="mt-2 text-sm text-gray-500">
-            Good Performance
+            {analytics.academics.performanceStatus} Performance
           </p>
         </div>
 
@@ -40,7 +98,7 @@ const StudentDashboard = () => {
           </p>
 
           <h2 className="mt-2 text-3xl font-bold text-red-500">
-            60%
+            {analytics.attendance.attendancePercentage}%
           </h2>
 
           <p className="mt-2 text-sm text-gray-500">
@@ -55,7 +113,7 @@ const StudentDashboard = () => {
           </p>
 
           <h2 className="mt-2 text-3xl font-bold text-green-600">
-            80%
+            {analytics.quizzes.averagePercentage}%
           </h2>
 
           <p className="mt-2 text-sm text-gray-500">
@@ -70,7 +128,7 @@ const StudentDashboard = () => {
           </p>
 
           <h2 className="mt-2 text-3xl font-bold text-purple-600">
-            90%
+            {analytics.assignments.averagePercentage}%
           </h2>
 
           <p className="mt-2 text-sm text-gray-500">
@@ -95,7 +153,7 @@ const StudentDashboard = () => {
             </p>
 
             <p className="mt-1 text-2xl font-bold text-green-600">
-              Low Risk
+              {analytics.riskAssessment.riskLevel}
             </p>
           </div>
 
@@ -105,27 +163,40 @@ const StudentDashboard = () => {
             </p>
 
             <p className="mt-1 text-2xl font-bold text-gray-800">
-              20 / 100
+              {analytics.riskAssessment.riskScore} / 100
             </p>
           </div>
 
         </div>
 
-        <div className="mt-5 rounded-lg bg-yellow-50 p-4">
-          <p className="font-medium text-yellow-800">
-            ⚠ Attendance is below 75%
-          </p>
+        {/* Risk Factors */}
+        {analytics.riskAssessment.riskFactors.length > 0 && (
+          <div className="mt-5 rounded-lg bg-yellow-50 p-4">
 
-          <p className="mt-1 text-sm text-yellow-700">
-            Improve your attendance to reduce academic risk.
-          </p>
-        </div>
+            {analytics.riskAssessment.riskFactors.map(
+              (factor, index) => (
+                <p
+                  key={index}
+                  className="font-medium text-yellow-800"
+                >
+                  ⚠ {factor}
+                </p>
+              )
+            )}
+
+            <p className="mt-1 text-sm text-yellow-700">
+              Improve your attendance to reduce academic risk.
+            </p>
+
+          </div>
+        )}
 
       </div>
 
       {/* Academic Overview */}
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
 
+        {/* Overview */}
         <div className="rounded-xl bg-white p-6 shadow">
 
           <h2 className="text-xl font-semibold text-gray-800">
@@ -140,7 +211,7 @@ const StudentDashboard = () => {
               </span>
 
               <span className="font-semibold">
-                5
+                {analytics.academics.totalSubjects}
               </span>
             </div>
 
@@ -150,7 +221,7 @@ const StudentDashboard = () => {
               </span>
 
               <span className="font-semibold">
-                1
+                {analytics.quizzes.attempted}
               </span>
             </div>
 
@@ -160,7 +231,7 @@ const StudentDashboard = () => {
               </span>
 
               <span className="font-semibold">
-                1
+                {analytics.assignments.graded}
               </span>
             </div>
 
@@ -170,7 +241,8 @@ const StudentDashboard = () => {
               </span>
 
               <span className="font-semibold">
-                3 / 5
+                {analytics.attendance.presentClasses} /{" "}
+                {analytics.attendance.totalClasses}
               </span>
             </div>
 
