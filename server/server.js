@@ -72,6 +72,10 @@ app.use(
   "/api/assignment-performance",
   assignmentPerformanceRoutes
 );
+app.use(
+  "/api/student-analytics",
+  studentAnalyticsRoutes
+);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
