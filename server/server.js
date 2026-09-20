@@ -25,6 +25,9 @@ const quizPerformanceRoutes = require("./routes/quizPerformanceRoutes");
 const assignmentPerformanceRoutes = require(
   "./routes/assignmentPerformanceRoutes"
 );
+const studentAnalyticsRoutes = require(
+  "./routes/studentAnalyticsRoutes"
+);
 dotenv.config();
 
 connectDB();
