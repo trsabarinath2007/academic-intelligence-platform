@@ -41,6 +41,25 @@ const StudentDashboard = () => {
       }
 
       setAnalytics(data);
+      const courseResponse = await fetch(
+  "http://localhost:5000/api/course-performance/student",
+  {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
+
+const courseData = await courseResponse.json();
+
+if (!courseResponse.ok) {
+  throw new Error(
+    courseData.message || "Failed to fetch course performance"
+  );
+}
+
+setCoursePerformance(courseData.coursePerformance);
     } catch (error) {
       setError(error.message);
     } finally {
