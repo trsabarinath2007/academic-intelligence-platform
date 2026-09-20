@@ -25,7 +25,10 @@ const StudentDashboard = () => {
     try {
       const token = localStorage.getItem("token");
 
-      // Student Analytics
+      // ==========================================
+      // 1. STUDENT ANALYTICS
+      // ==========================================
+
       const response = await fetch(
         "http://localhost:5000/api/student-analytics/student",
         {
@@ -46,7 +49,10 @@ const StudentDashboard = () => {
 
       setAnalytics(data);
 
-      // Course Performance
+      // ==========================================
+      // 2. COURSE PERFORMANCE
+      // ==========================================
+
       const courseResponse = await fetch(
         "http://localhost:5000/api/course-performance/student",
         {
@@ -69,6 +75,35 @@ const StudentDashboard = () => {
       setCoursePerformance(
         courseData.coursePerformance || []
       );
+
+      // ==========================================
+      // 3. COURSE ATTENDANCE
+      // ==========================================
+
+      const attendanceResponse = await fetch(
+        "http://localhost:5000/api/course-attendance/student",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const attendanceData =
+        await attendanceResponse.json();
+
+      if (!attendanceResponse.ok) {
+        throw new Error(
+          attendanceData.message ||
+            "Failed to fetch course attendance"
+        );
+      }
+
+      setCourseAttendance(
+        attendanceData.courseAttendance || []
+      );
+
     } catch (error) {
       setError(error.message);
     } finally {
@@ -76,10 +111,13 @@ const StudentDashboard = () => {
     }
   };
 
-  // Loading
+  // ==========================================
+  // LOADING
+  // ==========================================
+
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-100">
         <p className="text-lg text-gray-600">
           Loading dashboard...
         </p>
@@ -87,13 +125,18 @@ const StudentDashboard = () => {
     );
   }
 
-  // Error
+  // ==========================================
+  // ERROR
+  // ==========================================
+
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-lg text-red-600">
-          {error}
-        </p>
+      <div className="flex min-h-screen items-center justify-center bg-gray-100">
+        <div className="rounded-xl bg-white p-8 shadow">
+          <p className="text-lg text-red-600">
+            {error}
+          </p>
+        </div>
       </div>
     );
   }
@@ -101,7 +144,10 @@ const StudentDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
 
-      {/* Header */}
+      {/* ========================================
+          HEADER
+      ======================================== */}
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">
           Student Dashboard
@@ -112,11 +158,16 @@ const StudentDashboard = () => {
         </p>
       </div>
 
-      {/* Summary Cards */}
+      {/* ========================================
+          SUMMARY CARDS
+      ======================================== */}
+
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
 
         {/* GPA */}
+
         <div className="rounded-xl bg-white p-6 shadow">
+
           <p className="text-sm text-gray-500">
             Current GPA
           </p>
@@ -128,10 +179,13 @@ const StudentDashboard = () => {
           <p className="mt-2 text-sm text-gray-500">
             {analytics.academics.performanceStatus} Performance
           </p>
+
         </div>
 
-        {/* Attendance */}
+        {/* ATTENDANCE */}
+
         <div className="rounded-xl bg-white p-6 shadow">
+
           <p className="text-sm text-gray-500">
             Attendance
           </p>
@@ -143,10 +197,13 @@ const StudentDashboard = () => {
           <p className="mt-2 text-sm text-gray-500">
             Below 75%
           </p>
+
         </div>
 
-        {/* Quiz */}
+        {/* QUIZ */}
+
         <div className="rounded-xl bg-white p-6 shadow">
+
           <p className="text-sm text-gray-500">
             Quiz Average
           </p>
@@ -158,10 +215,13 @@ const StudentDashboard = () => {
           <p className="mt-2 text-sm text-gray-500">
             Good
           </p>
+
         </div>
 
-        {/* Assignment */}
+        {/* ASSIGNMENT */}
+
         <div className="rounded-xl bg-white p-6 shadow">
+
           <p className="text-sm text-gray-500">
             Assignment Average
           </p>
@@ -173,11 +233,15 @@ const StudentDashboard = () => {
           <p className="mt-2 text-sm text-gray-500">
             Excellent
           </p>
+
         </div>
 
       </div>
 
-      {/* Risk Assessment */}
+      {/* ========================================
+          RISK ASSESSMENT
+      ======================================== */}
+
       <div className="mt-8 rounded-xl bg-white p-6 shadow">
 
         <h2 className="text-xl font-semibold text-gray-800">
@@ -187,6 +251,7 @@ const StudentDashboard = () => {
         <div className="mt-4 flex items-center justify-between">
 
           <div>
+
             <p className="text-sm text-gray-500">
               Current Risk Level
             </p>
@@ -194,9 +259,11 @@ const StudentDashboard = () => {
             <p className="mt-1 text-2xl font-bold text-green-600">
               {analytics.riskAssessment.riskLevel}
             </p>
+
           </div>
 
           <div className="text-right">
+
             <p className="text-sm text-gray-500">
               Risk Score
             </p>
@@ -204,22 +271,27 @@ const StudentDashboard = () => {
             <p className="mt-1 text-2xl font-bold text-gray-800">
               {analytics.riskAssessment.riskScore} / 100
             </p>
+
           </div>
 
         </div>
 
-        {/* Risk Factors */}
+        {/* RISK FACTORS */}
+
         {analytics.riskAssessment.riskFactors.length > 0 && (
+
           <div className="mt-5 rounded-lg bg-yellow-50 p-4">
 
             {analytics.riskAssessment.riskFactors.map(
               (factor, index) => (
+
                 <p
                   key={index}
                   className="font-medium text-yellow-800"
                 >
                   ⚠ {factor}
                 </p>
+
               )
             )}
 
@@ -228,11 +300,15 @@ const StudentDashboard = () => {
             </p>
 
           </div>
+
         )}
 
       </div>
 
-      {/* Course Performance */}
+      {/* ========================================
+          COURSE PERFORMANCE
+      ======================================== */}
+
       <div className="mt-8 rounded-xl bg-white p-6 shadow">
 
         <h2 className="mb-6 text-xl font-semibold text-gray-800">
@@ -241,10 +317,18 @@ const StudentDashboard = () => {
 
         <div className="h-80 w-full">
 
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={coursePerformance}>
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+          >
 
-              <CartesianGrid strokeDasharray="3 3" />
+            <BarChart
+              data={coursePerformance}
+            >
+
+              <CartesianGrid
+                strokeDasharray="3 3"
+              />
 
               <XAxis
                 dataKey="courseCode"
@@ -259,21 +343,76 @@ const StudentDashboard = () => {
               <Bar
                 dataKey="totalMarks"
                 fill="#2563eb"
-                name="Score %"
+                name="Marks"
                 radius={[6, 6, 0, 0]}
               />
 
             </BarChart>
+
           </ResponsiveContainer>
 
         </div>
 
       </div>
 
-      {/* Academic Overview */}
+      {/* ========================================
+          ATTENDANCE BY COURSE
+      ======================================== */}
+
+      <div className="mt-8 rounded-xl bg-white p-6 shadow">
+
+        <h2 className="mb-6 text-xl font-semibold text-gray-800">
+          Attendance by Course
+        </h2>
+
+        <div className="h-80 w-full">
+
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+          >
+
+            <BarChart
+              data={courseAttendance}
+            >
+
+              <CartesianGrid
+                strokeDasharray="3 3"
+              />
+
+              <XAxis
+                dataKey="courseCode"
+              />
+
+              <YAxis
+                domain={[0, 100]}
+              />
+
+              <Tooltip />
+
+              <Bar
+                dataKey="attendancePercentage"
+                fill="#16a34a"
+                name="Attendance %"
+                radius={[6, 6, 0, 0]}
+              />
+
+            </BarChart>
+
+          </ResponsiveContainer>
+
+        </div>
+
+      </div>
+
+      {/* ========================================
+          ACADEMIC OVERVIEW + QUICK ACTIONS
+      ======================================== */}
+
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
 
-        {/* Overview */}
+        {/* ACADEMIC OVERVIEW */}
+
         <div className="rounded-xl bg-white p-6 shadow">
 
           <h2 className="text-xl font-semibold text-gray-800">
@@ -282,7 +421,10 @@ const StudentDashboard = () => {
 
           <div className="mt-5 space-y-4">
 
+            {/* Subjects */}
+
             <div className="flex justify-between">
+
               <span className="text-gray-500">
                 Total Subjects
               </span>
@@ -290,9 +432,13 @@ const StudentDashboard = () => {
               <span className="font-semibold">
                 {analytics.academics.totalSubjects}
               </span>
+
             </div>
 
+            {/* Quizzes */}
+
             <div className="flex justify-between">
+
               <span className="text-gray-500">
                 Quizzes Attempted
               </span>
@@ -300,9 +446,13 @@ const StudentDashboard = () => {
               <span className="font-semibold">
                 {analytics.quizzes.attempted}
               </span>
+
             </div>
 
+            {/* Assignments */}
+
             <div className="flex justify-between">
+
               <span className="text-gray-500">
                 Assignments Graded
               </span>
@@ -310,9 +460,13 @@ const StudentDashboard = () => {
               <span className="font-semibold">
                 {analytics.assignments.graded}
               </span>
+
             </div>
 
+            {/* Attendance */}
+
             <div className="flex justify-between">
+
               <span className="text-gray-500">
                 Classes Attended
               </span>
@@ -321,13 +475,15 @@ const StudentDashboard = () => {
                 {analytics.attendance.presentClasses} /{" "}
                 {analytics.attendance.totalClasses}
               </span>
+
             </div>
 
           </div>
 
         </div>
 
-        {/* Quick Actions */}
+        {/* QUICK ACTIONS */}
+
         <div className="rounded-xl bg-white p-6 shadow">
 
           <h2 className="text-xl font-semibold text-gray-800">
@@ -336,19 +492,27 @@ const StudentDashboard = () => {
 
           <div className="mt-5 grid grid-cols-2 gap-4">
 
-            <button className="rounded-lg bg-blue-600 p-4 font-medium text-white hover:bg-blue-700">
+            <button
+              className="rounded-lg bg-blue-600 p-4 font-medium text-white hover:bg-blue-700"
+            >
               View Courses
             </button>
 
-            <button className="rounded-lg bg-purple-600 p-4 font-medium text-white hover:bg-purple-700">
+            <button
+              className="rounded-lg bg-purple-600 p-4 font-medium text-white hover:bg-purple-700"
+            >
               View Assignments
             </button>
 
-            <button className="rounded-lg bg-green-600 p-4 font-medium text-white hover:bg-green-700">
+            <button
+              className="rounded-lg bg-green-600 p-4 font-medium text-white hover:bg-green-700"
+            >
               View Quizzes
             </button>
 
-            <button className="rounded-lg bg-gray-800 p-4 font-medium text-white hover:bg-gray-900">
+            <button
+              className="rounded-lg bg-gray-800 p-4 font-medium text-white hover:bg-gray-900"
+            >
               View Insights
             </button>
 
