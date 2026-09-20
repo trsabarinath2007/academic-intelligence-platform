@@ -32,6 +32,20 @@ function StudentDashboard() {
   };
 
   // --------------------------------
+  // Scroll to Section
+  // --------------------------------
+  const scrollToSection = (sectionId) => {
+    const section = document.getElementById(sectionId);
+
+    if (section) {
+      section.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
+
+  // --------------------------------
   // Fetch Dashboard Data
   // --------------------------------
   useEffect(() => {
@@ -50,7 +64,9 @@ function StudentDashboard() {
           Authorization: `Bearer ${token}`,
         };
 
+        // --------------------------------
         // 1. Student Analytics
+        // --------------------------------
         const analyticsResponse = await fetch(
           "http://localhost:5000/api/student-analytics/student",
           {
@@ -58,7 +74,8 @@ function StudentDashboard() {
           }
         );
 
-        const analyticsData = await analyticsResponse.json();
+        const analyticsData =
+          await analyticsResponse.json();
 
         if (!analyticsResponse.ok) {
           throw new Error(
@@ -69,7 +86,9 @@ function StudentDashboard() {
 
         setAnalytics(analyticsData);
 
+        // --------------------------------
         // 2. Course Performance
+        // --------------------------------
         const performanceResponse = await fetch(
           "http://localhost:5000/api/course-performance/student",
           {
@@ -91,7 +110,9 @@ function StudentDashboard() {
           performanceData.coursePerformance || []
         );
 
+        // --------------------------------
         // 3. Course Attendance
+        // --------------------------------
         const attendanceResponse = await fetch(
           "http://localhost:5000/api/course-attendance/student",
           {
@@ -113,7 +134,9 @@ function StudentDashboard() {
           attendanceData.courseAttendance || []
         );
 
+        // --------------------------------
         // 4. Quiz Performance
+        // --------------------------------
         const quizResponse = await fetch(
           "http://localhost:5000/api/quiz-performance/student",
           {
@@ -134,7 +157,9 @@ function StudentDashboard() {
           quizData.quizPerformance || []
         );
 
+        // --------------------------------
         // 5. Assignment Performance
+        // --------------------------------
         const assignmentResponse = await fetch(
           "http://localhost:5000/api/assignment-performance/student",
           {
@@ -252,7 +277,6 @@ function StudentDashboard() {
       <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
 
-          {/* Logo */}
           <div>
             <h1 className="text-xl font-bold text-blue-600">
               Academic Intelligence
@@ -263,7 +287,6 @@ function StudentDashboard() {
             </p>
           </div>
 
-          {/* Student + Logout */}
           <div className="flex items-center gap-4">
 
             <div className="hidden text-right sm:block">
@@ -299,7 +322,7 @@ function StudentDashboard() {
       ================================== */}
       <main className="mx-auto max-w-7xl px-6 py-8">
 
-        {/* Dashboard Header */}
+        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">
             Student Dashboard
@@ -362,6 +385,7 @@ function StudentDashboard() {
 
           {/* GPA */}
           <div className="rounded-xl bg-white p-6 shadow-sm">
+
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-medium text-gray-500">
                 GPA
@@ -379,10 +403,12 @@ function StudentDashboard() {
             <p className="mt-2 text-sm text-gray-500">
               {academics?.performanceStatus || "-"}
             </p>
+
           </div>
 
           {/* Attendance */}
           <div className="rounded-xl bg-white p-6 shadow-sm">
+
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-medium text-gray-500">
                 Attendance
@@ -401,10 +427,12 @@ function StudentDashboard() {
               {attendance?.presentClasses ?? 0} /{" "}
               {attendance?.totalClasses ?? 0} classes
             </p>
+
           </div>
 
           {/* Quiz */}
           <div className="rounded-xl bg-white p-6 shadow-sm">
+
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-medium text-gray-500">
                 Quiz Average
@@ -422,10 +450,12 @@ function StudentDashboard() {
             <p className="mt-2 text-sm text-gray-500">
               {quizzes?.attempted ?? 0} attempted
             </p>
+
           </div>
 
           {/* Assignment */}
           <div className="rounded-xl bg-white p-6 shadow-sm">
+
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-medium text-gray-500">
                 Assignment Average
@@ -443,6 +473,7 @@ function StudentDashboard() {
             <p className="mt-2 text-sm text-gray-500">
               {assignments?.graded ?? 0} graded
             </p>
+
           </div>
 
         </div>
@@ -453,6 +484,7 @@ function StudentDashboard() {
         <div className="mb-8 rounded-xl bg-white p-6 shadow-sm">
 
           <div className="mb-5 flex items-center justify-between">
+
             <h2 className="text-xl font-bold text-gray-800">
               Risk Assessment
             </h2>
@@ -469,9 +501,11 @@ function StudentDashboard() {
             >
               {riskAssessment?.riskLevel || "-"}
             </span>
+
           </div>
 
           <div className="mb-5 rounded-lg bg-gray-50 p-4">
+
             <p className="text-sm text-gray-500">
               Risk Score
             </p>
@@ -479,10 +513,12 @@ function StudentDashboard() {
             <p className="mt-1 text-3xl font-bold text-gray-800">
               {riskAssessment?.riskScore ?? 0}
             </p>
+
           </div>
 
           {riskAssessment?.riskFactors?.length > 0 && (
             <div>
+
               <p className="mb-2 font-semibold text-gray-700">
                 Risk Factors
               </p>
@@ -496,6 +532,7 @@ function StudentDashboard() {
                   )
                 )}
               </ul>
+
             </div>
           )}
 
@@ -504,7 +541,10 @@ function StudentDashboard() {
         {/* ==================================
             COURSE PERFORMANCE
         ================================== */}
-        <div className="mb-8 rounded-xl bg-white p-6 shadow-sm">
+        <div
+          id="course-performance"
+          className="mb-8 scroll-mt-24 rounded-xl bg-white p-6 shadow-sm"
+        >
 
           <h2 className="mb-6 text-xl font-bold text-gray-800">
             Course Performance
@@ -547,7 +587,10 @@ function StudentDashboard() {
         {/* ==================================
             ATTENDANCE
         ================================== */}
-        <div className="mb-8 rounded-xl bg-white p-6 shadow-sm">
+        <div
+          id="attendance"
+          className="mb-8 scroll-mt-24 rounded-xl bg-white p-6 shadow-sm"
+        >
 
           <h2 className="mb-6 text-xl font-bold text-gray-800">
             Attendance by Course
@@ -590,7 +633,10 @@ function StudentDashboard() {
         {/* ==================================
             QUIZ PERFORMANCE
         ================================== */}
-        <div className="mb-8 rounded-xl bg-white p-6 shadow-sm">
+        <div
+          id="quiz-performance"
+          className="mb-8 scroll-mt-24 rounded-xl bg-white p-6 shadow-sm"
+        >
 
           <h2 className="mb-6 text-xl font-bold text-gray-800">
             Quiz Performance
@@ -730,28 +776,28 @@ function StudentDashboard() {
           <div className="grid gap-4 md:grid-cols-3">
 
             <button
-              className="rounded-lg bg-blue-600 p-3 font-semibold text-white transition hover:bg-blue-700"
               onClick={() =>
-                alert("Course performance selected")
+                scrollToSection("course-performance")
               }
+              className="rounded-lg bg-blue-600 p-3 font-semibold text-white transition hover:bg-blue-700"
             >
               View Course Performance
             </button>
 
             <button
-              className="rounded-lg bg-green-600 p-3 font-semibold text-white transition hover:bg-green-700"
               onClick={() =>
-                alert("Attendance selected")
+                scrollToSection("attendance")
               }
+              className="rounded-lg bg-green-600 p-3 font-semibold text-white transition hover:bg-green-700"
             >
               View Attendance
             </button>
 
             <button
-              className="rounded-lg bg-purple-600 p-3 font-semibold text-white transition hover:bg-purple-700"
               onClick={() =>
-                alert("Quiz performance selected")
+                scrollToSection("quiz-performance")
               }
+              className="rounded-lg bg-purple-600 p-3 font-semibold text-white transition hover:bg-purple-700"
             >
               View Quiz Performance
             </button>
