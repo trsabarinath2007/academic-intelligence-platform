@@ -12,9 +12,9 @@ import {
 
 const StudentDashboard = () => {
   const [analytics, setAnalytics] = useState(null);
+  const [coursePerformance, setCoursePerformance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [coursePerformance, setCoursePerformance] = useState([]);
 
   useEffect(() => {
     fetchAnalytics();
@@ -24,6 +24,7 @@ const StudentDashboard = () => {
     try {
       const token = localStorage.getItem("token");
 
+      // Student Analytics
       const response = await fetch(
         "http://localhost:5000/api/student-analytics/student",
         {
@@ -37,29 +38,36 @@ const StudentDashboard = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to fetch analytics");
+        throw new Error(
+          data.message || "Failed to fetch analytics"
+        );
       }
 
       setAnalytics(data);
+
+      // Course Performance
       const courseResponse = await fetch(
-  "http://localhost:5000/api/course-performance/student",
-  {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  }
-);
+        "http://localhost:5000/api/course-performance/student",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-const courseData = await courseResponse.json();
+      const courseData = await courseResponse.json();
 
-if (!courseResponse.ok) {
-  throw new Error(
-    courseData.message || "Failed to fetch course performance"
-  );
-}
+      if (!courseResponse.ok) {
+        throw new Error(
+          courseData.message ||
+            "Failed to fetch course performance"
+        );
+      }
 
-setCoursePerformance(courseData.coursePerformance);
+      setCoursePerformance(
+        courseData.coursePerformance || []
+      );
     } catch (error) {
       setError(error.message);
     } finally {
@@ -220,6 +228,44 @@ setCoursePerformance(courseData.coursePerformance);
 
           </div>
         )}
+
+      </div>
+
+      {/* Course Performance */}
+      <div className="mt-8 rounded-xl bg-white p-6 shadow">
+
+        <h2 className="mb-6 text-xl font-semibold text-gray-800">
+          Course Performance
+        </h2>
+
+        <div className="h-80 w-full">
+
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={coursePerformance}>
+
+              <CartesianGrid strokeDasharray="3 3" />
+
+              <XAxis
+                dataKey="courseCode"
+              />
+
+              <YAxis
+                domain={[0, 100]}
+              />
+
+              <Tooltip />
+
+              <Bar
+                dataKey="percentage"
+                fill="#2563eb"
+                name="Score %"
+                radius={[6, 6, 0, 0]}
+              />
+
+            </BarChart>
+          </ResponsiveContainer>
+
+        </div>
 
       </div>
 
