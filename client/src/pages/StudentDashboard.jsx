@@ -15,6 +15,8 @@ function StudentDashboard() {
   const [coursePerformance, setCoursePerformance] = useState([]);
   const [courseAttendance, setCourseAttendance] = useState([]);
   const [quizPerformance, setQuizPerformance] = useState([]);
+  const [assignmentPerformance, setAssignmentPerformance] =
+    useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -43,7 +45,8 @@ function StudentDashboard() {
           }
         );
 
-        const analyticsData = await analyticsResponse.json();
+        const analyticsData =
+          await analyticsResponse.json();
 
         if (!analyticsResponse.ok) {
           throw new Error(
@@ -130,6 +133,32 @@ function StudentDashboard() {
         setQuizPerformance(
           quizData.quizPerformance || []
         );
+
+        // --------------------------------
+        // 5. Assignment Performance
+        // --------------------------------
+        const assignmentResponse = await fetch(
+          "http://localhost:5000/api/assignment-performance/student",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const assignmentData =
+          await assignmentResponse.json();
+
+        if (!assignmentResponse.ok) {
+          throw new Error(
+            assignmentData.message ||
+              "Failed to fetch assignment performance"
+          );
+        }
+
+        setAssignmentPerformance(
+          assignmentData.assignmentPerformance || []
+        );
       } catch (error) {
         console.error(error);
         setError(error.message);
@@ -173,15 +202,30 @@ function StudentDashboard() {
     );
   }
 
-  // --------------------------------
-  // Dashboard data
-  // --------------------------------
   const student = analytics?.student;
   const academics = analytics?.academics;
   const attendance = analytics?.attendance;
   const quizzes = analytics?.quizzes;
   const assignments = analytics?.assignments;
   const riskAssessment = analytics?.riskAssessment;
+
+  // --------------------------------
+  // Assignment chart data
+  // --------------------------------
+  const assignmentChartData =
+    assignmentPerformance.map((assignment) => ({
+      ...assignment,
+      percentage:
+        assignment.totalMarks > 0
+          ? Number(
+              (
+                (assignment.marksObtained /
+                  assignment.totalMarks) *
+                100
+              ).toFixed(2)
+            )
+          : 0,
+    }));
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -203,6 +247,7 @@ function StudentDashboard() {
           Student Information
       -------------------------------- */}
       <div className="mb-8 rounded-xl bg-white p-6 shadow">
+
         <h2 className="mb-4 text-xl font-bold text-gray-800">
           Student Information
         </h2>
@@ -278,7 +323,7 @@ function StudentDashboard() {
           </p>
         </div>
 
-        {/* Quizzes */}
+        {/* Quiz */}
         <div className="rounded-xl bg-white p-6 shadow">
           <p className="text-sm text-gray-500">
             Quiz Average
@@ -293,7 +338,7 @@ function StudentDashboard() {
           </p>
         </div>
 
-        {/* Assignments */}
+        {/* Assignment */}
         <div className="rounded-xl bg-white p-6 shadow">
           <p className="text-sm text-gray-500">
             Assignment Average
@@ -364,7 +409,7 @@ function StudentDashboard() {
       </div>
 
       {/* --------------------------------
-          Course Performance Chart
+          Course Performance
       -------------------------------- */}
       <div className="mb-8 rounded-xl bg-white p-6 shadow">
 
@@ -456,7 +501,7 @@ function StudentDashboard() {
       </div>
 
       {/* --------------------------------
-          Quiz Performance Chart
+          Quiz Performance
       -------------------------------- */}
       <div className="mb-8 rounded-xl bg-white p-6 shadow">
 
@@ -496,6 +541,52 @@ function StudentDashboard() {
         ) : (
           <p className="text-gray-500">
             No quiz performance data available.
+          </p>
+        )}
+
+      </div>
+
+      {/* --------------------------------
+          Assignment Performance
+      -------------------------------- */}
+      <div className="mb-8 rounded-xl bg-white p-6 shadow">
+
+        <h2 className="mb-4 text-xl font-bold text-gray-800">
+          Assignment Performance
+        </h2>
+
+        {assignmentChartData.length > 0 ? (
+          <ResponsiveContainer
+            width="100%"
+            height={350}
+          >
+            <BarChart data={assignmentChartData}>
+
+              <CartesianGrid strokeDasharray="3 3" />
+
+              <XAxis
+                dataKey="courseCode"
+              />
+
+              <YAxis
+                domain={[0, 100]}
+              />
+
+              <Tooltip />
+
+              <Legend />
+
+              <Bar
+                dataKey="percentage"
+                name="Assignment Percentage"
+                fill="#f97316"
+              />
+
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-gray-500">
+            No assignment performance data available.
           </p>
         )}
 
