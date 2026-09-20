@@ -6,16 +6,14 @@ const {
 
 const {
   protect,
-  authorize,
 } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// Get Assignment Performance
+// Get logged-in student's assignment performance
 router.get(
   "/student",
   protect,
-  authorize("student"),
   getAssignmentPerformance
 );
 
