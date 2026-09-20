@@ -13,6 +13,7 @@ import {
 const StudentDashboard = () => {
   const [analytics, setAnalytics] = useState(null);
   const [coursePerformance, setCoursePerformance] = useState([]);
+  const [courseAttendance, setCourseAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -256,7 +257,7 @@ const StudentDashboard = () => {
               <Tooltip />
 
               <Bar
-                dataKey="percentage"
+                dataKey="totalMarks"
                 fill="#2563eb"
                 name="Score %"
                 radius={[6, 6, 0, 0]}
