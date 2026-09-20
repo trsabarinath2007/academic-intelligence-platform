@@ -14,6 +14,7 @@ const StudentDashboard = () => {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [coursePerformance, setCoursePerformance] = useState([]);
 
   useEffect(() => {
     fetchAnalytics();
