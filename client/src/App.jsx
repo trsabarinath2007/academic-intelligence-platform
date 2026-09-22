@@ -69,6 +69,45 @@ function App() {
   path="/assignment-performance"
   element={<AssignmentPerformance />}
 />
+<Route
+  path="/student-dashboard"
+  element={<StudentDashboard />}
+/>
+
+<Route
+  path="/student-profile"
+  element={<StudentProfile />}
+/>
+
+<Route
+  path="/student-courses"
+  element={<Courses />}
+/>
+
+<Route
+  path="/academic-records"
+  element={<AcademicRecords />}
+/>
+
+<Route
+  path="/attendance"
+  element={<Attendance />}
+/>
+
+<Route
+  path="/quiz-performance"
+  element={<QuizPerformance />}
+/>
+
+<Route
+  path="/assignment-performance"
+  element={<AssignmentPerformance />}
+/>
+
+<Route
+  path="/performance-insights"
+  element={<PerformanceInsights />}
+/>
 
       </Routes>
     </BrowserRouter>
