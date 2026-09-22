@@ -24,6 +24,10 @@ function App() {
         />
 
         <Route path="*" element={<NotFound />} />
+        <Route
+  path="/student-profile"
+  element={<StudentProfile />}
+/>
 
       </Routes>
     </BrowserRouter>
