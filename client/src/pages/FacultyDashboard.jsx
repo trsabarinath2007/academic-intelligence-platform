@@ -75,7 +75,6 @@ function FacultyDashboard() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-100 p-6">
         <div className="rounded-xl bg-white p-8 text-center shadow-lg">
-
           <h1 className="mb-3 text-xl font-bold text-red-600">
             Error
           </h1>
@@ -92,7 +91,6 @@ function FacultyDashboard() {
           >
             Go to Login
           </button>
-
         </div>
       </div>
     );
@@ -138,6 +136,7 @@ function FacultyDashboard() {
 
       </nav>
 
+
       {/* ================= MAIN ================= */}
 
       <main className="mx-auto max-w-7xl px-6 py-8">
@@ -155,6 +154,7 @@ function FacultyDashboard() {
           </p>
 
         </div>
+
 
         {/* ================= SUMMARY ================= */}
 
@@ -174,6 +174,7 @@ function FacultyDashboard() {
 
           </div>
 
+
           {/* GPA */}
 
           <div className="rounded-xl bg-white p-6 shadow-sm">
@@ -188,6 +189,7 @@ function FacultyDashboard() {
 
           </div>
 
+
           {/* Attendance */}
 
           <div className="rounded-xl bg-white p-6 shadow-sm">
@@ -201,6 +203,7 @@ function FacultyDashboard() {
             </p>
 
           </div>
+
 
           {/* Quiz */}
 
@@ -218,6 +221,7 @@ function FacultyDashboard() {
 
         </div>
 
+
         {/* ================= SECONDARY SUMMARY ================= */}
 
         <div className="mb-8 grid gap-6 md:grid-cols-3">
@@ -234,6 +238,7 @@ function FacultyDashboard() {
 
           </div>
 
+
           <div className="rounded-xl bg-white p-6 shadow-sm">
 
             <p className="text-sm text-gray-500">
@@ -245,6 +250,7 @@ function FacultyDashboard() {
             </p>
 
           </div>
+
 
           <div className="rounded-xl bg-white p-6 shadow-sm">
 
@@ -259,6 +265,7 @@ function FacultyDashboard() {
           </div>
 
         </div>
+
 
         {/* ================= STUDENT PERFORMANCE ================= */}
 
@@ -305,6 +312,7 @@ function FacultyDashboard() {
 
         </section>
 
+
         {/* ================= DEPARTMENT ANALYTICS ================= */}
 
         <section className="mb-8 rounded-xl bg-white p-6 shadow-sm">
@@ -349,6 +357,7 @@ function FacultyDashboard() {
           </div>
 
         </section>
+
 
         {/* ================= STUDENT TABLE ================= */}
 
@@ -400,10 +409,12 @@ function FacultyDashboard() {
 
                 </thead>
 
+
                 <tbody className="divide-y divide-gray-100">
 
                   {performance.map(
                     (student, index) => (
+
                       <tr
                         key={index}
                         className="transition hover:bg-gray-50"
@@ -455,6 +466,7 @@ function FacultyDashboard() {
                         </td>
 
                       </tr>
+
                     )
                   )}
 
@@ -474,6 +486,7 @@ function FacultyDashboard() {
 
         </section>
 
+
         {/* ================= AT-RISK STUDENTS ================= */}
 
         <section className="mb-8 rounded-xl bg-white p-6 shadow-sm">
@@ -489,6 +502,7 @@ function FacultyDashboard() {
             </p>
 
           </div>
+
 
           {atRiskStudents.length > 0 ? (
 
@@ -524,10 +538,12 @@ function FacultyDashboard() {
 
                 </thead>
 
+
                 <tbody className="divide-y divide-gray-100">
 
                   {atRiskStudents.map(
                     (student, index) => (
+
                       <tr
                         key={index}
                         className="hover:bg-red-50"
@@ -554,6 +570,7 @@ function FacultyDashboard() {
                         </td>
 
                       </tr>
+
                     )
                   )}
 
@@ -577,6 +594,7 @@ function FacultyDashboard() {
 
         </section>
 
+
         {/* ================= QUICK ACTIONS ================= */}
 
         <section>
@@ -585,7 +603,9 @@ function FacultyDashboard() {
             Faculty Actions
           </h2>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+
+            {/* Students */}
 
             <button
               onClick={() => {
@@ -605,6 +625,9 @@ function FacultyDashboard() {
 
             </button>
 
+
+            {/* Attendance */}
+
             <button
               onClick={() => {
                 window.location.href =
@@ -623,6 +646,9 @@ function FacultyDashboard() {
 
             </button>
 
+
+            {/* Assignments */}
+
             <button
               onClick={() => {
                 window.location.href =
@@ -637,6 +663,27 @@ function FacultyDashboard() {
 
               <p className="mt-2 text-sm text-gray-500">
                 Create and manage assignments.
+              </p>
+
+            </button>
+
+
+            {/* Submissions & Grading */}
+
+            <button
+              onClick={() => {
+                window.location.href =
+                  "/faculty-submissions";
+              }}
+              className="rounded-xl bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            >
+
+              <h3 className="text-lg font-bold text-gray-800">
+                Submissions & Grading
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Review and grade student submissions.
               </p>
 
             </button>
