@@ -1,4 +1,5 @@
 const express = require("express");
+
 const router = express.Router();
 
 const {
@@ -9,6 +10,7 @@ const {
 
 const {
   protect,
+  authorize,
 } = require("../middleware/authMiddleware");
 
 // Mark Attendance
@@ -23,6 +25,14 @@ router.get(
   "/student/:studentId",
   protect,
   getStudentAttendance
+);
+
+// Get All Attendance - Faculty/Admin
+router.get(
+  "/",
+  protect,
+  authorize("faculty", "admin"),
+  getAllAttendance
 );
 
 module.exports = router;
