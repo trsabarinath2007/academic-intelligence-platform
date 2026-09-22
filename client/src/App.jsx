@@ -109,6 +109,10 @@ function App() {
   path="/performance-insights"
   element={<PerformanceInsights />}
 />
+<Route
+  path="/faculty-dashboard"
+  element={<FacultyDashboard />}
+/>
 
       </Routes>
     </BrowserRouter>
