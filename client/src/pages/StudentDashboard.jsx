@@ -8,14 +8,19 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  LineChart,
+  Line,
 } from "recharts";
+
+import Layout from "../components/Layout";
 
 function StudentDashboard() {
   const [analytics, setAnalytics] = useState(null);
   const [coursePerformance, setCoursePerformance] = useState([]);
   const [courseAttendance, setCourseAttendance] = useState([]);
   const [quizPerformance, setQuizPerformance] = useState([]);
-  const [assignmentPerformance, setAssignmentPerformance] = useState([]);
+  const [assignmentPerformance, setAssignmentPerformance] =
+    useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -35,7 +40,7 @@ function StudentDashboard() {
 
         const [
           analyticsResponse,
-          coursePerformanceResponse,
+          courseResponse,
           attendanceResponse,
           quizResponse,
           assignmentResponse,
@@ -66,31 +71,30 @@ function StudentDashboard() {
           ),
         ]);
 
-        const analyticsData =
-          await analyticsResponse.json();
-
-        const coursePerformanceData =
-          await coursePerformanceResponse.json();
-
-        const attendanceData =
-          await attendanceResponse.json();
-
-        const quizData =
-          await quizResponse.json();
-
-        const assignmentData =
-          await assignmentResponse.json();
+        const [
+          analyticsData,
+          courseData,
+          attendanceData,
+          quizData,
+          assignmentData,
+        ] = await Promise.all([
+          analyticsResponse.json(),
+          courseResponse.json(),
+          attendanceResponse.json(),
+          quizResponse.json(),
+          assignmentResponse.json(),
+        ]);
 
         if (!analyticsResponse.ok) {
           throw new Error(
             analyticsData.message ||
-              "Failed to fetch analytics"
+              "Failed to fetch dashboard data"
           );
         }
 
-        if (!coursePerformanceResponse.ok) {
+        if (!courseResponse.ok) {
           throw new Error(
-            coursePerformanceData.message ||
+            courseData.message ||
               "Failed to fetch course performance"
           );
         }
@@ -117,19 +121,15 @@ function StudentDashboard() {
         }
 
         setAnalytics(analyticsData);
-
         setCoursePerformance(
-          coursePerformanceData.coursePerformance || []
+          courseData.coursePerformance || []
         );
-
         setCourseAttendance(
           attendanceData.courseAttendance || []
         );
-
         setQuizPerformance(
           quizData.quizPerformance || []
         );
-
         setAssignmentPerformance(
           assignmentData.assignmentPerformance || []
         );
@@ -144,335 +144,374 @@ function StudentDashboard() {
     fetchDashboardData();
   }, []);
 
-  // Logout
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    window.location.href = "/login";
-  };
-
-  // Loading
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <p className="text-lg font-semibold text-gray-600">
-          Loading dashboard...
-        </p>
-      </div>
-    );
-  }
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
 
-  // Error
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100 p-6">
-        <div className="rounded-xl bg-white p-8 text-center shadow-lg">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600" />
 
-          <h1 className="mb-3 text-xl font-bold text-red-600">
-            Error
-          </h1>
-
-          <p className="mb-5 text-gray-600">
-            {error}
+          <p className="font-medium text-gray-600">
+            Loading your dashboard...
           </p>
-
-          <button
-            onClick={() => {
-              window.location.href = "/login";
-            }}
-            className="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white hover:bg-blue-700"
-          >
-            Go to Login
-          </button>
 
         </div>
       </div>
     );
   }
 
-  // Data
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
+
+        <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-sm">
+
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 text-2xl text-red-600">
+            !
+          </div>
+
+          <h2 className="text-xl font-bold text-gray-900">
+            Unable to load dashboard
+          </h2>
+
+          <p className="mt-2 text-sm text-gray-500">
+            {error}
+          </p>
+
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-6 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+          >
+            Try Again
+          </button>
+
+        </div>
+
+      </div>
+    );
+  }
+
   const student = analytics?.student;
   const academics = analytics?.academics;
   const attendance = analytics?.attendance;
   const quizzes = analytics?.quizzes;
   const assignments = analytics?.assignments;
-  const riskAssessment = analytics?.riskAssessment;
+  const risk = analytics?.riskAssessment;
 
-  // Assignment chart data
-  const assignmentChartData =
-    assignmentPerformance.map((assignment) => ({
-      name: assignment.assignmentTitle,
-
-      percentage:
-        assignment.totalMarks > 0 &&
-        assignment.marksObtained !== null
-          ? Number(
-              (
-                (assignment.marksObtained /
-                  assignment.totalMarks) *
-                100
-              ).toFixed(2)
-            )
-          : 0,
-    }));
+  const studentName =
+    JSON.parse(localStorage.getItem("user") || "{}")?.name ||
+    "Student";
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <Layout
+      role="student"
+      title="Student Dashboard"
+      description="Overview of your academic performance"
+    >
 
-      {/* ================= NAVBAR ================= */}
+      {/* ================================================= */}
+      {/* WELCOME SECTION */}
+      {/* ================================================= */}
 
-      <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm">
+      <section className="mb-8">
 
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white shadow-lg lg:p-8">
 
-          {/* Logo */}
-
-          <div>
-            <h1 className="text-xl font-bold text-blue-600">
-              Academic Intelligence
-            </h1>
-
-            <p className="text-xs text-gray-500">
-              Student Portal
-            </p>
-          </div>
-
-          {/* Right Side */}
-
-          <div className="flex items-center gap-4">
-
-            {/* Profile */}
-
-            <button
-              onClick={() => {
-                window.location.href =
-                  "/student-profile";
-              }}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-gray-100"
-            >
-
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 font-bold text-white">
-                {student?.studentId
-                  ? student.studentId.charAt(0)
-                  : "S"}
-              </div>
-
-              <div className="hidden text-left sm:block">
-
-                <p className="text-sm font-semibold text-gray-800">
-                  {student?.studentId}
-                </p>
-
-                <p className="text-xs text-gray-500">
-                  {student?.department}
-                </p>
-
-              </div>
-
-            </button>
-
-            {/* Logout */}
-
-            <button
-              onClick={handleLogout}
-              className="rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600"
-            >
-              Logout
-            </button>
-
-          </div>
-
-        </div>
-
-      </nav>
-
-      {/* ================= MAIN ================= */}
-
-      <main className="mx-auto max-w-7xl px-6 py-8">
-
-        {/* Header */}
-
-        <div className="mb-8">
-
-          <h1 className="text-3xl font-bold text-gray-800">
-            Student Dashboard
-          </h1>
-
-          <p className="mt-1 text-gray-500">
-            Monitor your academic performance and progress.
-          </p>
-
-        </div>
-
-        {/* ================= STUDENT INFO ================= */}
-
-        <div className="mb-8 rounded-xl bg-white p-6 shadow-sm">
-
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
 
             <div>
-              <p className="text-sm text-gray-500">
+
+              <p className="text-sm font-medium text-blue-100">
+                Welcome back
+              </p>
+
+              <h2 className="mt-1 text-3xl font-bold">
+                Hello, {studentName} 👋
+              </h2>
+
+              <p className="mt-2 max-w-xl text-sm text-blue-100">
+                Here's a quick overview of your academic
+                performance and progress.
+              </p>
+
+            </div>
+
+            <div className="rounded-xl bg-white/10 px-5 py-4 backdrop-blur">
+
+              <p className="text-xs text-blue-100">
                 Student ID
               </p>
 
-              <p className="mt-1 text-lg font-bold text-gray-800">
-                {student?.studentId}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-sm text-gray-500">
-                Department
+              <p className="mt-1 text-lg font-bold">
+                {student?.studentId || "—"}
               </p>
 
-              <p className="mt-1 text-lg font-bold text-gray-800">
-                {student?.department}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-sm text-gray-500">
-                Semester
-              </p>
-
-              <p className="mt-1 text-lg font-bold text-gray-800">
-                {student?.semester}
-              </p>
             </div>
 
           </div>
 
         </div>
 
-        {/* ================= SUMMARY CARDS ================= */}
+      </section>
 
-        <div className="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+
+      {/* ================================================= */}
+      {/* STUDENT INFORMATION */}
+      {/* ================================================= */}
+
+      <section className="mb-8">
+
+        <div className="grid gap-4 md:grid-cols-3">
+
+          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Department
+            </p>
+
+            <p className="mt-2 text-lg font-bold text-gray-800">
+              {student?.department || "—"}
+            </p>
+
+          </div>
+
+          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Semester
+            </p>
+
+            <p className="mt-2 text-lg font-bold text-gray-800">
+              Semester {student?.semester || "—"}
+            </p>
+
+          </div>
+
+          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Performance Status
+            </p>
+
+            <p className="mt-2 text-lg font-bold text-blue-600">
+              {academics?.performanceStatus || "—"}
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* ================================================= */}
+      {/* KPI CARDS */}
+      {/* ================================================= */}
+
+      <section className="mb-8">
+
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
 
           {/* GPA */}
 
-          <div className="rounded-xl bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
 
-            <p className="text-sm text-gray-500">
-              GPA
-            </p>
+            <div className="flex items-start justify-between">
 
-            <p className="mt-2 text-3xl font-bold text-blue-600">
-              {academics?.gpa}
-            </p>
+              <div>
 
-            <p className="mt-1 text-sm text-gray-500">
-              {academics?.totalSubjects} Subjects
+                <p className="text-sm font-medium text-gray-500">
+                  Overall GPA
+                </p>
+
+                <p className="mt-2 text-3xl font-bold text-gray-900">
+                  {academics?.gpa ?? "—"}
+                </p>
+
+              </div>
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-xl text-blue-600">
+                ★
+              </div>
+
+            </div>
+
+            <p className="mt-4 text-xs text-gray-400">
+              Based on {academics?.totalSubjects || 0} subjects
             </p>
 
           </div>
+
 
           {/* Attendance */}
 
-          <div className="rounded-xl bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
 
-            <p className="text-sm text-gray-500">
-              Attendance
-            </p>
+            <div className="flex items-start justify-between">
 
-            <p className="mt-2 text-3xl font-bold text-green-600">
-              {attendance?.attendancePercentage}%
-            </p>
+              <div>
 
-            <p className="mt-1 text-sm text-gray-500">
-              {attendance?.presentClasses}/
-              {attendance?.totalClasses} Classes
+                <p className="text-sm font-medium text-gray-500">
+                  Attendance
+                </p>
+
+                <p className="mt-2 text-3xl font-bold text-gray-900">
+                  {attendance?.attendancePercentage ?? 0}%
+                </p>
+
+              </div>
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-50 text-xl text-green-600">
+                ◷
+              </div>
+
+            </div>
+
+            <p className="mt-4 text-xs text-gray-400">
+              {attendance?.presentClasses || 0} of{" "}
+              {attendance?.totalClasses || 0} classes attended
             </p>
 
           </div>
+
 
           {/* Quiz */}
 
-          <div className="rounded-xl bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
 
-            <p className="text-sm text-gray-500">
-              Quiz Average
-            </p>
+            <div className="flex items-start justify-between">
 
-            <p className="mt-2 text-3xl font-bold text-purple-600">
-              {quizzes?.averagePercentage}%
-            </p>
+              <div>
 
-            <p className="mt-1 text-sm text-gray-500">
-              {quizzes?.attempted} Attempted
+                <p className="text-sm font-medium text-gray-500">
+                  Quiz Average
+                </p>
+
+                <p className="mt-2 text-3xl font-bold text-gray-900">
+                  {quizzes?.averagePercentage ?? 0}%
+                </p>
+
+              </div>
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-xl text-purple-600">
+                ✓
+              </div>
+
+            </div>
+
+            <p className="mt-4 text-xs text-gray-400">
+              {quizzes?.attempted || 0} quiz
+              {quizzes?.attempted === 1 ? "" : "zes"} attempted
             </p>
 
           </div>
 
-          {/* Assignment */}
 
-          <div className="rounded-xl bg-white p-6 shadow-sm">
+          {/* Assignments */}
 
-            <p className="text-sm text-gray-500">
-              Assignment Average
-            </p>
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
 
-            <p className="mt-2 text-3xl font-bold text-orange-500">
-              {assignments?.averagePercentage}%
-            </p>
+            <div className="flex items-start justify-between">
 
-            <p className="mt-1 text-sm text-gray-500">
-              {assignments?.graded} Graded
+              <div>
+
+                <p className="text-sm font-medium text-gray-500">
+                  Assignment Average
+                </p>
+
+                <p className="mt-2 text-3xl font-bold text-gray-900">
+                  {assignments?.averagePercentage ?? 0}%
+                </p>
+
+              </div>
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-50 text-xl text-orange-600">
+                □
+              </div>
+
+            </div>
+
+            <p className="mt-4 text-xs text-gray-400">
+              {assignments?.graded || 0} graded assignment
+              {assignments?.graded === 1 ? "" : "s"}
             </p>
 
           </div>
 
         </div>
 
-        {/* ================= RISK ASSESSMENT ================= */}
+      </section>
 
-        <div className="mb-8 rounded-xl bg-white p-6 shadow-sm">
 
-          <h2 className="mb-4 text-xl font-bold text-gray-800">
-            Risk Assessment
-          </h2>
+      {/* ================================================= */}
+      {/* RISK ASSESSMENT */}
+      {/* ================================================= */}
 
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <section className="mb-8">
+
+        <div
+          className={`rounded-2xl border p-6 ${
+            risk?.riskLevel === "Low Risk"
+              ? "border-green-200 bg-green-50"
+              : risk?.riskLevel === "Medium Risk"
+              ? "border-yellow-200 bg-yellow-50"
+              : "border-red-200 bg-red-50"
+          }`}
+        >
+
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
 
             <div>
 
-              <p className="text-sm text-gray-500">
-                Current Risk Level
+              <p className="text-sm font-semibold text-gray-500">
+                Academic Risk Assessment
               </p>
 
-              <p className="mt-1 text-2xl font-bold text-green-600">
-                {riskAssessment?.riskLevel}
+              <h3 className="mt-1 text-2xl font-bold text-gray-900">
+                {risk?.riskLevel || "Not Available"}
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-600">
+                Your current academic risk score is{" "}
+                <span className="font-bold">
+                  {risk?.riskScore ?? 0}
+                </span>
+                .
               </p>
 
             </div>
 
-            <div>
+            <div className="rounded-xl bg-white px-6 py-4 shadow-sm">
 
-              <p className="text-sm text-gray-500">
+              <p className="text-xs font-medium text-gray-500">
                 Risk Score
               </p>
 
-              <p className="mt-1 text-2xl font-bold text-gray-800">
-                {riskAssessment?.riskScore}
+              <p className="mt-1 text-3xl font-bold text-gray-900">
+                {risk?.riskScore ?? 0}
               </p>
 
             </div>
 
           </div>
 
-          {riskAssessment?.riskFactors?.length > 0 && (
-            <div className="mt-5">
+          {risk?.riskFactors?.length > 0 && (
+
+            <div className="mt-5 border-t border-gray-200/70 pt-5">
 
               <p className="mb-2 text-sm font-semibold text-gray-700">
-                Risk Factors
+                Factors
               </p>
 
-              <ul className="list-disc space-y-1 pl-5 text-sm text-gray-600">
+              <ul className="space-y-1">
 
-                {riskAssessment.riskFactors.map(
+                {risk.riskFactors.map(
                   (factor, index) => (
-                    <li key={index}>
-                      {factor}
+                    <li
+                      key={index}
+                      className="text-sm text-gray-600"
+                    >
+                      • {factor}
                     </li>
                   )
                 )}
@@ -480,24 +519,35 @@ function StudentDashboard() {
               </ul>
 
             </div>
+
           )}
 
         </div>
 
-        {/* ================= COURSE PERFORMANCE ================= */}
+      </section>
 
-        <section
-          id="course-performance"
-          className="mb-8 rounded-xl bg-white p-6 shadow-sm"
-        >
 
-          <h2 className="mb-2 text-xl font-bold text-gray-800">
-            Course Performance
-          </h2>
+      {/* ================================================= */}
+      {/* CHARTS ROW 1 */}
+      {/* ================================================= */}
 
-          <p className="mb-6 text-sm text-gray-500">
-            Total marks obtained in each course.
-          </p>
+      <section className="mb-8 grid gap-6 lg:grid-cols-2">
+
+        {/* Course Performance */}
+
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+
+          <div className="mb-6">
+
+            <h2 className="text-lg font-bold text-gray-900">
+              Course Performance
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Your marks across different courses.
+            </p>
+
+          </div>
 
           <div className="h-80">
 
@@ -506,20 +556,38 @@ function StudentDashboard() {
               height="100%"
             >
 
-              <BarChart data={coursePerformance}>
+              <BarChart
+                data={coursePerformance}
+                margin={{
+                  top: 10,
+                  right: 10,
+                  left: -20,
+                  bottom: 5,
+                }}
+              >
 
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                />
 
-                <XAxis dataKey="courseCode" />
+                <XAxis
+                  dataKey="courseCode"
+                  tick={{ fontSize: 12 }}
+                />
 
-                <YAxis />
+                <YAxis
+                  domain={[0, 100]}
+                  tick={{ fontSize: 12 }}
+                />
 
                 <Tooltip />
 
                 <Bar
                   dataKey="totalMarks"
                   fill="#2563eb"
-                  name="Total Marks"
+                  radius={[6, 6, 0, 0]}
+                  name="Marks"
                 />
 
               </BarChart>
@@ -528,22 +596,24 @@ function StudentDashboard() {
 
           </div>
 
-        </section>
+        </div>
 
-        {/* ================= ATTENDANCE ================= */}
 
-        <section
-          id="attendance"
-          className="mb-8 rounded-xl bg-white p-6 shadow-sm"
-        >
+        {/* Attendance */}
 
-          <h2 className="mb-2 text-xl font-bold text-gray-800">
-            Course-wise Attendance
-          </h2>
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
 
-          <p className="mb-6 text-sm text-gray-500">
-            Attendance percentage for each course.
-          </p>
+          <div className="mb-6">
+
+            <h2 className="text-lg font-bold text-gray-900">
+              Course Attendance
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Attendance percentage by course.
+            </p>
+
+          </div>
 
           <div className="h-80">
 
@@ -552,20 +622,38 @@ function StudentDashboard() {
               height="100%"
             >
 
-              <BarChart data={courseAttendance}>
+              <BarChart
+                data={courseAttendance}
+                margin={{
+                  top: 10,
+                  right: 10,
+                  left: -20,
+                  bottom: 5,
+                }}
+              >
 
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                />
 
-                <XAxis dataKey="courseCode" />
+                <XAxis
+                  dataKey="courseCode"
+                  tick={{ fontSize: 12 }}
+                />
 
-                <YAxis domain={[0, 100]} />
+                <YAxis
+                  domain={[0, 100]}
+                  tick={{ fontSize: 12 }}
+                />
 
                 <Tooltip />
 
                 <Bar
                   dataKey="attendancePercentage"
                   fill="#16a34a"
-                  name="Attendance %"
+                  radius={[6, 6, 0, 0]}
+                  name="Attendance"
                 />
 
               </BarChart>
@@ -574,307 +662,375 @@ function StudentDashboard() {
 
           </div>
 
-        </section>
+        </div>
 
-        {/* ================= QUIZ PERFORMANCE ================= */}
+      </section>
 
-        <section className="mb-8 rounded-xl bg-white p-6 shadow-sm">
 
-          <h2 className="mb-2 text-xl font-bold text-gray-800">
-            Quiz Performance
-          </h2>
+      {/* ================================================= */}
+      {/* CHARTS ROW 2 */}
+      {/* ================================================= */}
 
-          <p className="mb-6 text-sm text-gray-500">
-            Performance in completed quizzes.
-          </p>
+      <section className="mb-8 grid gap-6 lg:grid-cols-2">
 
-          <div className="h-80">
+        {/* Quiz */}
 
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-            >
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
 
-              <BarChart data={quizPerformance}>
+          <div className="mb-6">
 
-                <CartesianGrid strokeDasharray="3 3" />
+            <h2 className="text-lg font-bold text-gray-900">
+              Quiz Performance
+            </h2>
 
-                <XAxis
-                  dataKey="quizTitle"
-                  tick={{ fontSize: 12 }}
-                />
-
-                <YAxis domain={[0, 100]} />
-
-                <Tooltip />
-
-                <Bar
-                  dataKey="percentage"
-                  fill="#9333ea"
-                  name="Percentage"
-                />
-
-              </BarChart>
-
-            </ResponsiveContainer>
+            <p className="mt-1 text-sm text-gray-500">
+              Your quiz scores over time.
+            </p>
 
           </div>
 
-        </section>
+          <div className="h-72">
 
-        {/* ================= ASSIGNMENT PERFORMANCE ================= */}
+            {quizPerformance.length > 0 ? (
 
-        <section className="mb-8 rounded-xl bg-white p-6 shadow-sm">
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+              >
 
-          <h2 className="mb-2 text-xl font-bold text-gray-800">
-            Assignment Performance
-          </h2>
+                <LineChart
+                  data={quizPerformance}
+                  margin={{
+                    top: 10,
+                    right: 10,
+                    left: -20,
+                    bottom: 5,
+                  }}
+                >
 
-          <p className="mb-6 text-sm text-gray-500">
-            Percentage obtained in assignments.
-          </p>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                  />
 
-          <div className="h-80">
+                  <XAxis
+                    dataKey="quizTitle"
+                    tick={{ fontSize: 11 }}
+                  />
 
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-            >
+                  <YAxis
+                    domain={[0, 100]}
+                    tick={{ fontSize: 12 }}
+                  />
 
-              <BarChart data={assignmentChartData}>
+                  <Tooltip />
 
-                <CartesianGrid strokeDasharray="3 3" />
+                  <Line
+                    type="monotone"
+                    dataKey="percentage"
+                    stroke="#9333ea"
+                    strokeWidth={3}
+                    dot={{ r: 5 }}
+                    name="Score"
+                  />
 
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 12 }}
-                />
+                </LineChart>
 
-                <YAxis domain={[0, 100]} />
+              </ResponsiveContainer>
 
-                <Tooltip />
+            ) : (
 
-                <Bar
-                  dataKey="percentage"
-                  fill="#f97316"
-                  name="Percentage"
-                />
+              <div className="flex h-full items-center justify-center">
 
-              </BarChart>
+                <p className="text-sm text-gray-400">
+                  No quiz data available.
+                </p>
 
-            </ResponsiveContainer>
+              </div>
+
+            )}
 
           </div>
 
-        </section>
+        </div>
 
-        {/* ================= ACADEMIC OVERVIEW ================= */}
 
-        <section className="mb-8 rounded-xl bg-white p-6 shadow-sm">
+        {/* Assignments */}
 
-          <h2 className="mb-6 text-xl font-bold text-gray-800">
-            Academic Overview
-          </h2>
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
 
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="mb-6">
 
-            <div className="rounded-lg bg-gray-50 p-5">
+            <h2 className="text-lg font-bold text-gray-900">
+              Assignment Performance
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Your assignment scores.
+            </p>
+
+          </div>
+
+          <div className="h-72">
+
+            {assignmentPerformance.length > 0 ? (
+
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+              >
+
+                <BarChart
+                  data={assignmentPerformance}
+                  margin={{
+                    top: 10,
+                    right: 10,
+                    left: -20,
+                    bottom: 5,
+                  }}
+                >
+
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                  />
+
+                  <XAxis
+                    dataKey="assignmentTitle"
+                    tick={{ fontSize: 11 }}
+                  />
+
+                  <YAxis
+                    domain={[0, 100]}
+                    tick={{ fontSize: 12 }}
+                  />
+
+                  <Tooltip />
+
+                  <Bar
+                    dataKey="marksObtained"
+                    fill="#f97316"
+                    radius={[6, 6, 0, 0]}
+                    name="Marks"
+                  />
+
+                </BarChart>
+
+              </ResponsiveContainer>
+
+            ) : (
+
+              <div className="flex h-full items-center justify-center">
+
+                <p className="text-sm text-gray-400">
+                  No assignment data available.
+                </p>
+
+              </div>
+
+            )}
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* ================================================= */}
+      {/* ACADEMIC OVERVIEW */}
+      {/* ================================================= */}
+
+      <section className="mb-8">
+
+        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+
+          <div className="border-b border-gray-100 px-6 py-5">
+
+            <h2 className="text-lg font-bold text-gray-900">
+              Academic Overview
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Summary of your current academic activity.
+            </p>
+
+          </div>
+
+          <div className="grid gap-6 p-6 md:grid-cols-2 lg:grid-cols-4">
+
+            <div>
 
               <p className="text-sm text-gray-500">
-                Academic Status
+                Subjects
               </p>
 
-              <p className="mt-2 text-xl font-bold text-gray-800">
-                {academics?.performanceStatus}
+              <p className="mt-1 text-2xl font-bold text-gray-900">
+                {academics?.totalSubjects || 0}
               </p>
 
             </div>
 
-            <div className="rounded-lg bg-gray-50 p-5">
+            <div>
 
               <p className="text-sm text-gray-500">
-                Quiz Performance
+                Classes Attended
               </p>
 
-              <p className="mt-2 text-xl font-bold text-gray-800">
-                {quizzes?.averagePercentage}%
+              <p className="mt-1 text-2xl font-bold text-gray-900">
+                {attendance?.presentClasses || 0}
               </p>
 
             </div>
 
-            <div className="rounded-lg bg-gray-50 p-5">
+            <div>
 
               <p className="text-sm text-gray-500">
-                Assignment Performance
+                Quizzes Attempted
               </p>
 
-              <p className="mt-2 text-xl font-bold text-gray-800">
-                {assignments?.averagePercentage}%
+              <p className="mt-1 text-2xl font-bold text-gray-900">
+                {quizzes?.attempted || 0}
+              </p>
+
+            </div>
+
+            <div>
+
+              <p className="text-sm text-gray-500">
+                Assignments Graded
+              </p>
+
+              <p className="mt-1 text-2xl font-bold text-gray-900">
+                {assignments?.graded || 0}
               </p>
 
             </div>
 
           </div>
 
-        </section>
+        </div>
 
-        {/* ================= QUICK ACTIONS ================= */}
+      </section>
 
-        <section className="mb-8">
 
-          <h2 className="mb-5 text-xl font-bold text-gray-800">
+      {/* ================================================= */}
+      {/* QUICK ACTIONS */}
+      {/* ================================================= */}
+
+      <section>
+
+        <div className="mb-5">
+
+          <h2 className="text-lg font-bold text-gray-900">
             Quick Actions
           </h2>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <p className="mt-1 text-sm text-gray-500">
+            Quickly access your academic information.
+          </p>
 
-            {/* My Profile */}
+        </div>
 
-            <button
-              onClick={() => {
-                window.location.href =
-                  "/student-profile";
-              }}
-              className="rounded-xl bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-            >
 
-              <h3 className="text-lg font-bold text-gray-800">
-                My Profile
-              </h3>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-              <p className="mt-2 text-sm text-gray-500">
-                View your student profile and personal details.
-              </p>
+          <button
+            onClick={() =>
+              (window.location.href =
+                "/student-profile")
+            }
+            className="group rounded-xl border border-gray-100 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-md"
+          >
 
-            </button>
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+              ◉
+            </div>
 
-            {/* My Courses */}
+            <h3 className="font-semibold text-gray-900">
+              My Profile
+            </h3>
 
-            <button
-              onClick={() => {
-                window.location.href =
-                  "/student-courses";
-              }}
-              className="rounded-xl bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-            >
+            <p className="mt-1 text-sm text-gray-500">
+              View your student profile.
+            </p>
 
-              <h3 className="text-lg font-bold text-gray-800">
-                My Courses
-              </h3>
+          </button>
 
-              <p className="mt-2 text-sm text-gray-500">
-                View your current semester courses.
-              </p>
 
-            </button>
+          <button
+            onClick={() =>
+              (window.location.href =
+                "/academic-records")
+            }
+            className="group rounded-xl border border-gray-100 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-md"
+          >
 
-            {/* Academic Records */}
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+              ▥
+            </div>
 
-            <button
-              onClick={() => {
-                window.location.href =
-                  "/academic-records";
-              }}
-              className="rounded-xl bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-            >
+            <h3 className="font-semibold text-gray-900">
+              Academic Records
+            </h3>
 
-              <h3 className="text-lg font-bold text-gray-800">
-                Academic Records
-              </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              View your marks and grades.
+            </p>
 
-              <p className="mt-2 text-sm text-gray-500">
-                View marks, grades and academic records.
-              </p>
+          </button>
 
-            </button>
 
-            {/* Attendance */}
+          <button
+            onClick={() =>
+              (window.location.href =
+                "/attendance")
+            }
+            className="group rounded-xl border border-gray-100 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-md"
+          >
 
-            <button
-              onClick={() => {
-                window.location.href =
-                  "/attendance";
-              }}
-              className="rounded-xl bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-            >
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-600">
+              ◷
+            </div>
 
-              <h3 className="text-lg font-bold text-gray-800">
-                Attendance
-              </h3>
+            <h3 className="font-semibold text-gray-900">
+              Attendance
+            </h3>
 
-              <p className="mt-2 text-sm text-gray-500">
-                Check your course-wise attendance.
-              </p>
+            <p className="mt-1 text-sm text-gray-500">
+              Check your attendance details.
+            </p>
 
-            </button>
+          </button>
 
-            {/* Quiz Performance */}
 
-            <button
-              onClick={() => {
-                window.location.href =
-                  "/quiz-performance";
-              }}
-              className="rounded-xl bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-            >
+          <button
+            onClick={() =>
+              (window.location.href =
+                "/performance-insights")
+            }
+            className="group rounded-xl border border-gray-100 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-md"
+          >
 
-              <h3 className="text-lg font-bold text-gray-800">
-                Quiz Performance
-              </h3>
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
+              ↗
+            </div>
 
-              <p className="mt-2 text-sm text-gray-500">
-                View your quiz scores and performance.
-              </p>
+            <h3 className="font-semibold text-gray-900">
+              Performance Insights
+            </h3>
 
-            </button>
+            <p className="mt-1 text-sm text-gray-500">
+              View personalized insights.
+            </p>
 
-            {/* Assignment Performance */}
+          </button>
 
-            <button
-              onClick={() => {
-                window.location.href =
-                  "/assignment-performance";
-              }}
-              className="rounded-xl bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-            >
+        </div>
 
-              <h3 className="text-lg font-bold text-gray-800">
-                Assignment Performance
-              </h3>
+      </section>
 
-              <p className="mt-2 text-sm text-gray-500">
-                View assignment scores and faculty feedback.
-              </p>
-
-            </button>
-
-            {/* Performance Insights */}
-
-            <button
-              onClick={() => {
-                window.location.href =
-                  "/performance-insights";
-              }}
-              className="rounded-xl bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-            >
-
-              <h3 className="text-lg font-bold text-gray-800">
-                Performance Insights
-              </h3>
-
-              <p className="mt-2 text-sm text-gray-500">
-                View your strengths, weaknesses and recommendations.
-              </p>
-
-            </button>
-
-          </div>
-
-        </section>
-
-      </main>
-
-    </div>
+    </Layout>
   );
 }
 
