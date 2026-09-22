@@ -45,6 +45,10 @@ function App() {
   path="/attendance"
   element={<Attendance />}
 />
+<Route
+  path="/quiz-performance"
+  element={<QuizPerformance />}
+/>
 
       </Routes>
     </BrowserRouter>
