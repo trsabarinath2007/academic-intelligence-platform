@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 
@@ -8,42 +9,40 @@ function Layout({
   title,
   description,
 }) {
+  const [sidebarOpen, setSidebarOpen] =
+    useState(false);
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f8fafc]">
 
-      {/* ================================================= */}
-      {/* SIDEBAR */}
-      {/* ================================================= */}
+      {/* Sidebar */}
 
-      <Sidebar role={role} />
+      <Sidebar
+        role={role}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
+      {/* Main */}
 
-      {/* ================================================= */}
-      {/* MAIN AREA */}
-      {/* ================================================= */}
+      <div className="min-h-screen lg:pl-64">
 
-      <div className="min-h-screen pl-60">
-
-        {/* ================================================= */}
-        {/* TOPBAR */}
-        {/* ================================================= */}
+        {/* Topbar */}
 
         <Topbar
           title={title}
           description={description}
+          onMenuClick={() =>
+            setSidebarOpen(true)
+          }
         />
 
+        {/* Content */}
 
-        {/* ================================================= */}
-        {/* PAGE CONTENT */}
-        {/* ================================================= */}
+        <main className="w-full px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
 
-        <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
-
-          <div className="mx-auto w-full max-w-[1600px]">
-
+          <div className="mx-auto w-full max-w-[1500px]">
             {children}
-
           </div>
 
         </main>
