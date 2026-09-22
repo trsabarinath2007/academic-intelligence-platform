@@ -11,6 +11,7 @@ import AcademicRecords from "./pages/AcademicRecords";
 import Attendance from "./pages/Attendance";
 import QuizPerformance from "./pages/QuizPerformance";
 import AssignmentPerformance from "./pages/AssignmentPerformance";
+import PerformanceInsights from "./pages/PerformanceInsights";
 
 function App() {
   return (
