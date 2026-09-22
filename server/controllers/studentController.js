@@ -85,8 +85,31 @@ const getStudentProfile = async (req, res) => {
 };
 
 
-// Export both functions at the END
+// Get All Students - Faculty/Admin
+const getAllStudents = async (req, res) => {
+  try {
+    const students = await Student.find()
+      .populate("user", "name email role")
+      .sort({ studentId: 1 });
+
+    res.status(200).json({
+      success: true,
+      count: students.length,
+      students,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to get students",
+      error: error.message,
+    });
+  }
+};
+
+
+// Export all functions
 module.exports = {
   createStudentProfile,
   getStudentProfile,
+  getAllStudents,
 };
