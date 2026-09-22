@@ -3,6 +3,7 @@ const express = require("express");
 const {
   createStudentProfile,
   getStudentProfile,
+  getAllStudents,
 } = require("../controllers/studentController");
 
 const {
