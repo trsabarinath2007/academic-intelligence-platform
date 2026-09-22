@@ -49,6 +49,25 @@ function App() {
   path="/quiz-performance"
   element={<QuizPerformance />}
 />
+<Route
+  path="/academic-records"
+  element={<AcademicRecords />}
+/>
+
+<Route
+  path="/attendance"
+  element={<Attendance />}
+/>
+
+<Route
+  path="/quiz-performance"
+  element={<QuizPerformance />}
+/>
+
+<Route
+  path="/assignment-performance"
+  element={<AssignmentPerformance />}
+/>
 
       </Routes>
     </BrowserRouter>
