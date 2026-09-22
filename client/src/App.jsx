@@ -40,6 +40,10 @@ function App() {
   path="/academic-records"
   element={<AcademicRecords />}
 />
+<Route
+  path="/attendance"
+  element={<Attendance />}
+/>
 
       </Routes>
     </BrowserRouter>
