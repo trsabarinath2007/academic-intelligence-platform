@@ -3,6 +3,7 @@ const express = require("express");
 const {
   createAcademicRecord,
   getAllAcademicRecords,
+  getStudentAcademicRecords,
 } = require("../controllers/academicRecordController");
 
 const {
@@ -12,7 +13,20 @@ const {
 
 const router = express.Router();
 
-// Get all academic records - Admin only
+// ========================================
+// Student - Get Own Academic Records
+// ========================================
+
+router.get(
+  "/student",
+  protect,
+  getStudentAcademicRecords
+);
+
+// ========================================
+// Admin - Get All Academic Records
+// ========================================
+
 router.get(
   "/",
   protect,
@@ -20,7 +34,10 @@ router.get(
   getAllAcademicRecords
 );
 
-// Create academic record - Admin only
+// ========================================
+// Admin - Create Academic Record
+// ========================================
+
 router.post(
   "/",
   protect,
