@@ -103,7 +103,7 @@ const createAcademicRecord = async (req, res) => {
   }
 };
 
-// Get All Academic Records
+// Get All Academic Records - Admin
 const getAllAcademicRecords = async (req, res) => {
   try {
     const records = await AcademicRecord.find()
@@ -124,7 +124,53 @@ const getAllAcademicRecords = async (req, res) => {
   }
 };
 
+// Get Academic Records - Logged-in Student
+const getStudentAcademicRecords = async (req, res) => {
+  try {
+    // Find student profile using logged-in user's ID
+    const student = await Student.findOne({
+      user: req.user._id,
+    });
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student profile not found",
+      });
+    }
+
+    // Get records belonging to this student
+    const records = await AcademicRecord.find({
+      student: student._id,
+    }).populate({
+      path: "course",
+      select: "courseCode courseName credits department semester",
+    });
+
+    res.status(200).json({
+      success: true,
+
+      student: {
+        studentId: student.studentId,
+        department: student.department,
+        semester: student.semester,
+      },
+
+      count: records.length,
+
+      records,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch student academic records",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createAcademicRecord,
   getAllAcademicRecords,
+  getStudentAcademicRecords,
 };
