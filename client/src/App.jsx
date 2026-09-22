@@ -15,6 +15,7 @@ import PerformanceInsights from "./pages/PerformanceInsights";
 import FacultyDashboard from "./pages/FacultyDashboard";
 import FacultyStudents from "./pages/FacultyStudents";
 import FacultyAttendance from "./pages/FacultyAttendance";
+import FacultyAssignments from "./pages/FacultyAssignments";
 
 function App() {
   return (
