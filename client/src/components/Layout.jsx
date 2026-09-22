@@ -15,9 +15,9 @@ function Layout({
 
       <Sidebar role={role} />
 
-      {/* Main Area */}
+      {/* Main Content */}
 
-      <div className="ml-64 min-h-screen">
+      <div className="min-h-screen pl-64">
 
         {/* Topbar */}
 
@@ -26,10 +26,12 @@ function Layout({
           description={description}
         />
 
-        {/* Page Content */}
+        {/* Content */}
 
-        <main className="p-6 lg:p-8">
-          {children}
+        <main className="w-full px-5 py-6 sm:px-6 lg:px-8">
+          <div className="mx-auto w-full max-w-[1600px]">
+            {children}
+          </div>
         </main>
 
       </div>
