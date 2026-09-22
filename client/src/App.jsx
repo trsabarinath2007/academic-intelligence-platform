@@ -12,6 +12,7 @@ import Attendance from "./pages/Attendance";
 import QuizPerformance from "./pages/QuizPerformance";
 import AssignmentPerformance from "./pages/AssignmentPerformance";
 import PerformanceInsights from "./pages/PerformanceInsights";
+import FacultyDashboard from "./pages/FacultyDashboard";
 
 function App() {
   return (
