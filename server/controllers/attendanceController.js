@@ -7,7 +7,6 @@ const markAttendance = async (req, res) => {
   try {
     const { studentId, courseId, date, status } = req.body;
 
-    // Validate fields
     if (!studentId || !courseId || !status) {
       return res.status(400).json({
         success: false,
@@ -15,7 +14,6 @@ const markAttendance = async (req, res) => {
       });
     }
 
-    // Validate status
     if (!["Present", "Absent"].includes(status)) {
       return res.status(400).json({
         success: false,
@@ -23,7 +21,6 @@ const markAttendance = async (req, res) => {
       });
     }
 
-    // Check student
     const student = await Student.findById(studentId);
 
     if (!student) {
@@ -33,7 +30,6 @@ const markAttendance = async (req, res) => {
       });
     }
 
-    // Check course
     const course = await Course.findById(courseId);
 
     if (!course) {
@@ -43,7 +39,6 @@ const markAttendance = async (req, res) => {
       });
     }
 
-    // Create attendance
     const attendance = await Attendance.create({
       student: studentId,
       course: courseId,
@@ -57,11 +52,11 @@ const markAttendance = async (req, res) => {
       attendance,
     });
   } catch (error) {
-    // Duplicate attendance error
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
-        message: "Attendance already marked for this student and course on this date",
+        message:
+          "Attendance already marked for this student and course on this date",
       });
     }
 
@@ -72,6 +67,7 @@ const markAttendance = async (req, res) => {
     });
   }
 };
+
 
 // Get Student Attendance
 const getStudentAttendance = async (req, res) => {
@@ -126,7 +122,39 @@ const getStudentAttendance = async (req, res) => {
   }
 };
 
+
+// Get All Attendance - Faculty/Admin
+const getAllAttendance = async (req, res) => {
+  try {
+    const attendance = await Attendance.find()
+      .populate({
+        path: "student",
+        select: "studentId department semester section",
+        populate: {
+          path: "user",
+          select: "name email",
+        },
+      })
+      .populate("course", "courseCode courseName")
+      .sort({ date: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: attendance.length,
+      attendance,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to get all attendance",
+      error: error.message,
+    });
+  }
+};
+
+
 module.exports = {
   markAttendance,
   getStudentAttendance,
+  getAllAttendance,
 };

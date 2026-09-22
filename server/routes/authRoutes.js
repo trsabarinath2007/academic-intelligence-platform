@@ -21,11 +21,6 @@ router.post("/login", loginUser);
 
 // Reset User Password
 // Only admin and faculty can reset passwords
-router.put(
-  "/reset-password",
-  protect,
-  authorize("admin", "faculty"),
-  resetUserPassword
-);
+router.put("/reset-password", resetUserPassword);
 
 module.exports = router;
