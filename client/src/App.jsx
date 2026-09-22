@@ -13,6 +13,7 @@ import QuizPerformance from "./pages/QuizPerformance";
 import AssignmentPerformance from "./pages/AssignmentPerformance";
 import PerformanceInsights from "./pages/PerformanceInsights";
 import FacultyDashboard from "./pages/FacultyDashboard";
+import FacultyStudents from "./pages/FacultyStudents";
 
 function App() {
   return (
