@@ -114,6 +114,10 @@ function App() {
   path="/faculty-dashboard"
   element={<FacultyDashboard />}
 />
+<Route
+  path="/faculty-students"
+  element={<FacultyStudents />}
+/>
 
       </Routes>
     </BrowserRouter>
