@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   markAttendance,
   getStudentAttendance,
+  getAllAttendance,
 } = require("../controllers/attendanceController");
 
 const {
