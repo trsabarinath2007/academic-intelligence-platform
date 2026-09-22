@@ -128,6 +128,10 @@ function App() {
   path="/faculty-assignments"
   element={<FacultyAssignments />}
 />
+<Route
+  path="/faculty-submissions"
+  element={<FacultySubmissions />}
+/>
 
       </Routes>
     </BrowserRouter>
