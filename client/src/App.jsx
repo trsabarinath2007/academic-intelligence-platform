@@ -34,6 +34,10 @@ function App() {
   path="/student-courses"
   element={<Courses />}
 />
+<Route
+  path="/academic-records"
+  element={<AcademicRecords />}
+/>
 
       </Routes>
     </BrowserRouter>
