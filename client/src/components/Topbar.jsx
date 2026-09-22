@@ -5,55 +5,72 @@ function Topbar({ title, description }) {
     localStorage.getItem("user") || "{}"
   );
 
+  const userName = user?.name || "User";
+
+  const initial = userName
+    .charAt(0)
+    .toUpperCase();
+
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/95 backdrop-blur">
 
-      <div className="flex h-20 items-center justify-between px-6 lg:px-8">
+      <div className="flex min-h-20 items-center justify-between gap-4 px-5 sm:px-6 lg:px-8">
 
-        {/* Page Information */}
+        {/* ================= PAGE TITLE ================= */}
 
-        <div>
+        <div className="min-w-0">
 
-          <h1 className="text-xl font-bold text-gray-900">
+          <h1 className="truncate text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
             {title}
           </h1>
 
           {description && (
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 hidden text-sm text-gray-500 sm:block">
               {description}
             </p>
           )}
 
         </div>
 
-        {/* Right Side */}
 
-        <div className="flex items-center gap-4">
+        {/* ================= RIGHT SIDE ================= */}
+
+        <div className="flex shrink-0 items-center gap-3">
 
           {/* Notification */}
 
           <button
-            className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:bg-gray-50"
+            type="button"
+            aria-label="Notifications"
+            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 hover:text-gray-700"
           >
-            ♢
+
+            <span className="text-lg">
+              ♢
+            </span>
 
             <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-blue-600" />
+
           </button>
+
+
+          {/* Divider */}
+
+          <div className="hidden h-8 w-px bg-gray-200 sm:block" />
+
 
           {/* User */}
 
-          <div className="flex items-center gap-3 border-l border-gray-200 pl-4">
+          <div className="flex items-center gap-3">
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-600">
-              {user?.name
-                ? user.name.charAt(0).toUpperCase()
-                : "U"}
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 font-bold text-blue-600 ring-4 ring-blue-50/50">
+              {initial}
             </div>
 
-            <div className="hidden sm:block">
+            <div className="hidden min-w-0 sm:block">
 
-              <p className="text-sm font-semibold text-gray-800">
-                {user?.name || "User"}
+              <p className="max-w-32 truncate text-sm font-semibold text-gray-800">
+                {userName}
               </p>
 
               <p className="text-xs capitalize text-gray-500">
