@@ -29,6 +29,10 @@ function App() {
   path="/student-profile"
   element={<StudentProfile />}
 />
+<Route
+  path="/student-courses"
+  element={<Courses />}
+/>
 
       </Routes>
     </BrowserRouter>
