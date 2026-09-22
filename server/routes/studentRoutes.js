@@ -41,4 +41,10 @@ router.get(
   getMyDashboard
 );
 
+router.get(
+  "/",
+  protect,
+  authorize("faculty", "admin"),
+  getAllStudents
+);
 module.exports = router;
