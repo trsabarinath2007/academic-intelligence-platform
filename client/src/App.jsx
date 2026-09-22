@@ -8,6 +8,8 @@ import NotFound from "./pages/NotFound";
 import StudentProfile from "./pages/StudentProfile";
 import Courses from "./pages/Courses";
 import AcademicRecords from "./pages/AcademicRecords";
+import Attendance from "./pages/Attendance";
+
 
 function App() {
   return (
