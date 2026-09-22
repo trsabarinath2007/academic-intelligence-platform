@@ -11,27 +11,41 @@ function Layout({
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Sidebar */}
+      {/* ================================================= */}
+      {/* SIDEBAR */}
+      {/* ================================================= */}
 
       <Sidebar role={role} />
 
-      {/* Main Content */}
 
-      <div className="min-h-screen pl-64">
+      {/* ================================================= */}
+      {/* MAIN AREA */}
+      {/* ================================================= */}
 
-        {/* Topbar */}
+      <div className="min-h-screen pl-60">
+
+        {/* ================================================= */}
+        {/* TOPBAR */}
+        {/* ================================================= */}
 
         <Topbar
           title={title}
           description={description}
         />
 
-        {/* Content */}
 
-        <main className="w-full px-5 py-6 sm:px-6 lg:px-8">
+        {/* ================================================= */}
+        {/* PAGE CONTENT */}
+        {/* ================================================= */}
+
+        <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
+
           <div className="mx-auto w-full max-w-[1600px]">
+
             {children}
+
           </div>
+
         </main>
 
       </div>
