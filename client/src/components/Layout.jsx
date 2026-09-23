@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 
@@ -13,9 +12,9 @@ function Layout({
     useState(false);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
+    <div className="min-h-screen bg-[#f8f7ff]">
 
-      {/* Sidebar */}
+      {/* SIDEBAR */}
 
       <Sidebar
         role={role}
@@ -23,11 +22,12 @@ function Layout({
         onClose={() => setSidebarOpen(false)}
       />
 
-      {/* Main */}
 
-      <div className="min-h-screen lg:pl-64">
+      {/* MAIN AREA */}
 
-        {/* Topbar */}
+      <div className="min-h-screen lg:pl-[255px]">
+
+        {/* TOPBAR */}
 
         <Topbar
           title={title}
@@ -37,12 +37,15 @@ function Layout({
           }
         />
 
-        {/* Content */}
 
-        <main className="w-full px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+        {/* PAGE CONTENT */}
 
-          <div className="mx-auto w-full max-w-[1500px]">
+        <main className="px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
+
+          <div className="mx-auto w-full max-w-[1450px]">
+
             {children}
+
           </div>
 
         </main>

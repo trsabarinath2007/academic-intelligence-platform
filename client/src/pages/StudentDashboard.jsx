@@ -1,746 +1,621 @@
 import React, { useEffect, useState } from "react";
-
 import {
+  ResponsiveContainer,
   BarChart,
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
+  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
   LineChart,
   Line,
 } from "recharts";
-
 import Layout from "../components/Layout";
 
+const API = "http://localhost:5000/api";
+
+// =====================================================
+// DEFAULT DATA
+// =====================================================
+
+const defaultData = {
+  success: true,
+
+  student: {
+    studentId: "STU001",
+    department: "Computer Science",
+    semester: 5,
+  },
+
+  academics: {
+    totalSubjects: 0,
+    gpa: 0,
+    performanceStatus: "Loading",
+  },
+
+  attendance: {
+    totalClasses: 0,
+    presentClasses: 0,
+    attendancePercentage: 0,
+  },
+
+  quizzes: {
+    attempted: 0,
+    averagePercentage: 0,
+  },
+
+  assignments: {
+    total: 0,
+    graded: 0,
+    averagePercentage: 0,
+  },
+
+  riskAssessment: {
+    riskLevel: "Loading",
+    riskScore: 0,
+    riskFactors: [],
+  },
+
+  insights: {
+    strengths: [],
+    weaknesses: [],
+    recommendations: [],
+  },
+};
+
+// =====================================================
+// API HELPER
+// =====================================================
+
+async function getData(url, token) {
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Request failed");
+  }
+
+  return data;
+}
+
+// =====================================================
+// STUDENT DASHBOARD
+// =====================================================
+
 function StudentDashboard() {
-  const [analytics, setAnalytics] = useState(null);
-  const [coursePerformance, setCoursePerformance] =
-    useState([]);
-  const [courseAttendance, setCourseAttendance] =
-    useState([]);
-  const [quizPerformance, setQuizPerformance] =
-    useState([]);
+  const [data, setData] = useState(defaultData);
+
+  const [coursePerformance, setCoursePerformance] = useState([]);
+
+  const [courseAttendance, setCourseAttendance] = useState([]);
+
+  const [quizPerformance, setQuizPerformance] = useState([]);
+
   const [assignmentPerformance, setAssignmentPerformance] =
     useState([]);
 
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // ===================================================
+  // LOAD DASHBOARD DATA
+  // ===================================================
+
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setError("Please login first.");
+      return;
+    }
+
+    async function loadDashboard() {
       try {
-        const token = localStorage.getItem("token");
+        console.log("FETCHING STUDENT DASHBOARD");
 
-        if (!token) {
-          throw new Error("Please login first.");
-        }
+        // =============================================
+        // MAIN ANALYTICS
+        // =============================================
 
-        const headers = {
-          Authorization: `Bearer ${token}`,
-        };
-
-        const [
-          analyticsResponse,
-          courseResponse,
-          attendanceResponse,
-          quizResponse,
-          assignmentResponse,
-        ] = await Promise.all([
-          fetch(
-            "http://localhost:5000/api/student-analytics/student",
-            { headers }
-          ),
-
-          fetch(
-            "http://localhost:5000/api/course-performance/student",
-            { headers }
-          ),
-
-          fetch(
-            "http://localhost:5000/api/course-attendance/student",
-            { headers }
-          ),
-
-          fetch(
-            "http://localhost:5000/api/quiz-performance/student",
-            { headers }
-          ),
-
-          fetch(
-            "http://localhost:5000/api/assignment-performance/student",
-            { headers }
-          ),
-        ]);
-
-        const [
-          analyticsData,
-          courseData,
-          attendanceData,
-          quizData,
-          assignmentData,
-        ] = await Promise.all([
-          analyticsResponse.json(),
-          courseResponse.json(),
-          attendanceResponse.json(),
-          quizResponse.json(),
-          assignmentResponse.json(),
-        ]);
-
-        if (!analyticsResponse.ok) {
-          throw new Error(
-            analyticsData.message ||
-              "Failed to fetch dashboard"
-          );
-        }
-
-        if (!courseResponse.ok) {
-          throw new Error(
-            courseData.message ||
-              "Failed to fetch course performance"
-          );
-        }
-
-        if (!attendanceResponse.ok) {
-          throw new Error(
-            attendanceData.message ||
-              "Failed to fetch attendance"
-          );
-        }
-
-        if (!quizResponse.ok) {
-          throw new Error(
-            quizData.message ||
-              "Failed to fetch quiz performance"
-          );
-        }
-
-        if (!assignmentResponse.ok) {
-          throw new Error(
-            assignmentData.message ||
-              "Failed to fetch assignments"
-          );
-        }
-
-        setAnalytics(analyticsData);
-
-        setCoursePerformance(
-          courseData.coursePerformance || []
+        const analytics = await getData(
+          `${API}/student-analytics/student`,
+          token
         );
 
-        setCourseAttendance(
-          attendanceData.courseAttendance || []
-        );
+        console.log("ANALYTICS:", analytics);
 
-        setQuizPerformance(
-          quizData.quizPerformance || []
-        );
+        setData(analytics);
 
-        setAssignmentPerformance(
-          assignmentData.assignmentPerformance || []
-        );
+        console.log("DASHBOARD DATA SET");
+
+        // =============================================
+        // COURSE PERFORMANCE
+        // =============================================
+
+        try {
+          const result = await getData(
+            `${API}/course-performance/student`,
+            token
+          );
+
+          console.log("COURSE PERFORMANCE:", result);
+
+          setCoursePerformance(
+            result.coursePerformance || []
+          );
+        } catch (error) {
+          console.log(
+            "Course performance:",
+            error.message
+          );
+        }
+
+        // =============================================
+        // COURSE ATTENDANCE
+        // =============================================
+
+        try {
+          const result = await getData(
+            `${API}/course-attendance/student`,
+            token
+          );
+
+          console.log("COURSE ATTENDANCE:", result);
+
+          setCourseAttendance(
+            result.courseAttendance || []
+          );
+        } catch (error) {
+          console.log(
+            "Course attendance:",
+            error.message
+          );
+        }
+
+        // =============================================
+        // QUIZ PERFORMANCE
+        // =============================================
+
+        try {
+          const result = await getData(
+            `${API}/quiz-performance/student`,
+            token
+          );
+
+          console.log("QUIZ PERFORMANCE:", result);
+
+          setQuizPerformance(
+            result.quizPerformance || []
+          );
+        } catch (error) {
+          console.log(
+            "Quiz performance:",
+            error.message
+          );
+        }
+
+        // =============================================
+        // ASSIGNMENT PERFORMANCE
+        // =============================================
+
+        try {
+          const result = await getData(
+            `${API}/assignment-performance/student`,
+            token
+          );
+
+          console.log(
+            "ASSIGNMENT PERFORMANCE:",
+            result
+          );
+
+          setAssignmentPerformance(
+            result.assignmentPerformance || []
+          );
+        } catch (error) {
+          console.log(
+            "Assignment performance:",
+            error.message
+          );
+        }
+
+        console.log("ALL DASHBOARD DATA LOADED");
       } catch (error) {
-        console.error(error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+        console.error("DASHBOARD ERROR:", error);
 
-    fetchDashboardData();
+        setError(error.message);
+      }
+    }
+
+    loadDashboard();
   }, []);
 
-  /* ================= LOADING ================= */
+  // ===================================================
+  // DATA
+  // ===================================================
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+  const student = data.student || {};
 
-        <div className="text-center">
+  const academics = data.academics || {};
 
-          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600" />
+  const attendance = data.attendance || {};
 
-          <p className="text-sm font-medium text-gray-600">
-            Loading your dashboard...
-          </p>
+  const quizzes = data.quizzes || {};
 
-        </div>
+  const assignments = data.assignments || {};
 
-      </div>
-    );
-  }
+  const risk = data.riskAssessment || {};
 
-  /* ================= ERROR ================= */
+  const insights = data.insights || {};
 
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
+  // ===================================================
+  // CHART DATA
+  // ===================================================
 
-        <div className="w-full max-w-md rounded-2xl border border-gray-100 bg-white p-8 text-center shadow-sm">
+  const performanceChart = coursePerformance.map(
+    (item) => ({
+      name: item.courseCode || "Course",
 
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-2xl text-red-500">
-            !
-          </div>
-
-          <h2 className="mt-4 text-xl font-bold text-gray-900">
-            Unable to load dashboard
-          </h2>
-
-          <p className="mt-2 text-sm text-gray-500">
-            {error}
-          </p>
-
-          <button
-            onClick={() =>
-              window.location.reload()
-            }
-            className="mt-6 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-          >
-            Try Again
-          </button>
-
-        </div>
-
-      </div>
-    );
-  }
-
-  /* ================= DATA ================= */
-
-  const student = analytics?.student;
-  const academics = analytics?.academics;
-  const attendance = analytics?.attendance;
-  const quizzes = analytics?.quizzes;
-  const assignments = analytics?.assignments;
-  const risk = analytics?.riskAssessment;
-
-  const user = JSON.parse(
-    localStorage.getItem("user") || "{}"
+      marks: Number(item.totalMarks) || 0,
+    })
   );
 
-  const studentName =
-    user?.name || "Student";
+  const attendanceChart = courseAttendance.map(
+    (item) => ({
+      name: item.courseCode || "Course",
 
-  /* ================= CHART DATA ================= */
-
-  const assignmentChartData =
-    assignmentPerformance.map((item) => ({
-      ...item,
       percentage:
-        item.totalMarks > 0
-          ? Math.round(
-              (item.marksObtained /
-                item.totalMarks) *
-                100
-            )
-          : 0,
-    }));
+        Number(item.attendancePercentage) || 0,
+    })
+  );
+
+  const quizChart = quizPerformance.map(
+    (item) => ({
+      name:
+        item.courseCode ||
+        item.quizTitle ||
+        "Quiz",
+
+      percentage:
+        Number(item.percentage) || 0,
+    })
+  );
+
+  const attendancePie = [
+    {
+      name: "Present",
+
+      value:
+        Number(attendance.presentClasses) || 0,
+    },
+
+    {
+      name: "Absent",
+
+      value: Math.max(
+        0,
+
+        (Number(attendance.totalClasses) || 0) -
+          (Number(attendance.presentClasses) || 0)
+      ),
+    },
+  ];
+
+  // ===================================================
+  // DASHBOARD
+  // ===================================================
 
   return (
     <Layout
       role="student"
       title="Student Dashboard"
-      description="Overview of your academic performance"
+      description="Your academic performance at a glance"
     >
+      <div className="space-y-7">
 
-      {/* ================================================= */}
-      {/* WELCOME */}
-      {/* ================================================= */}
+        {/* =============================================
+            ERROR
+        ============================================= */}
 
-      <section className="mb-6">
+        {error && (
+          <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">
+            ⚠️ {error}
+          </div>
+        )}
 
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-600 to-indigo-700 p-6 text-white shadow-lg sm:p-8">
+        {/* =============================================
+            WELCOME BANNER
+        ============================================= */}
 
-          {/* Decorative shapes */}
+        <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 p-8 text-white shadow-xl">
 
-          <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
+          <div className="relative z-10">
 
-          <div className="absolute -bottom-20 right-24 h-52 w-52 rounded-full bg-white/5" />
+            <p className="text-sm font-medium text-blue-100">
+              Academic Intelligence Platform
+            </p>
 
-          <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="mt-2 text-3xl font-bold">
+              Welcome back,{" "}
+              {student.studentId || "Student"} 👋
+            </h1>
 
-            <div>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-100">
+              Monitor your academic performance,
+              attendance, quizzes and assignments
+              from one dashboard.
+            </p>
 
-              <p className="text-sm font-medium text-blue-100">
-                Welcome back 👋
-              </p>
+            <div className="mt-6 flex flex-wrap gap-3">
 
-              <h2 className="mt-2 text-2xl font-bold sm:text-3xl">
-                Hello, {studentName}
-              </h2>
+              <InfoBadge
+                label="Department"
+                value={
+                  student.department ||
+                  "Computer Science"
+                }
+              />
 
-              <p className="mt-2 max-w-lg text-sm leading-6 text-blue-100">
-                Keep track of your academic progress,
-                attendance, quizzes and assignments from
-                one place.
-              </p>
+              <InfoBadge
+                label="Semester"
+                value={
+                  student.semester || "-"
+                }
+              />
 
             </div>
-
-            <div className="w-fit rounded-xl border border-white/10 bg-white/10 px-5 py-4 backdrop-blur">
-
-              <p className="text-xs text-blue-100">
-                Student ID
-              </p>
-
-              <p className="mt-1 text-xl font-bold">
-                {student?.studentId || "—"}
-              </p>
-
-            </div>
-
           </div>
 
-        </div>
+          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10" />
 
-      </section>
+          <div className="absolute -bottom-24 right-40 h-64 w-64 rounded-full bg-white/5" />
 
+        </section>
 
-      {/* ================================================= */}
-      {/* BASIC INFORMATION */}
-      {/* ================================================= */}
+        {/* =============================================
+            STAT CARDS
+        ============================================= */}
 
-      <section className="mb-6">
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-
-          <InfoCard
-            label="Department"
-            value={
-              student?.department || "—"
-            }
-          />
-
-          <InfoCard
-            label="Semester"
-            value={`Semester ${
-              student?.semester || "—"
-            }`}
-          />
-
-          <InfoCard
-            label="Performance Status"
-            value={
-              academics?.performanceStatus ||
-              "—"
-            }
-            valueClass="text-blue-600"
-          />
-
-        </div>
-
-      </section>
-
-
-      {/* ================================================= */}
-      {/* KPI CARDS */}
-      {/* ================================================= */}
-
-      <section className="mb-6">
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
 
           <StatCard
             title="Overall GPA"
-            value={academics?.gpa ?? "—"}
-            subtitle={`Based on ${
-              academics?.totalSubjects || 0
-            } subjects`}
-            icon="★"
-            iconClass="bg-blue-50 text-blue-600"
+            value={academics.gpa ?? 0}
+            subtitle={`${academics.totalSubjects || 0} subjects`}
+            icon="🎓"
           />
 
           <StatCard
             title="Attendance"
-            value={`${attendance?.attendancePercentage ?? 0}%`}
-            subtitle={`${attendance?.presentClasses || 0} of ${
-              attendance?.totalClasses || 0
-            } classes attended`}
-            icon="◷"
-            iconClass="bg-emerald-50 text-emerald-600"
+            value={`${attendance.attendancePercentage ?? 0}%`}
+            subtitle={`${attendance.presentClasses || 0} / ${attendance.totalClasses || 0} classes`}
+            icon="📅"
           />
 
           <StatCard
             title="Quiz Average"
-            value={`${quizzes?.averagePercentage ?? 0}%`}
-            subtitle={`${quizzes?.attempted || 0} quiz${
-              quizzes?.attempted === 1
-                ? ""
-                : "zes"
-            } attempted`}
-            icon="✓"
-            iconClass="bg-purple-50 text-purple-600"
+            value={`${quizzes.averagePercentage ?? 0}%`}
+            subtitle={`${quizzes.attempted || 0} attempted`}
+            icon="📝"
           />
 
           <StatCard
             title="Assignment Average"
-            value={`${assignments?.averagePercentage ?? 0}%`}
-            subtitle={`${assignments?.graded || 0} graded assignment${
-              assignments?.graded === 1
-                ? ""
-                : "s"
-            }`}
-            icon="□"
-            iconClass="bg-orange-50 text-orange-600"
+            value={`${assignments.averagePercentage ?? 0}%`}
+            subtitle={`${assignments.graded || 0} graded`}
+            icon="📚"
           />
 
         </div>
 
-      </section>
+        {/* =============================================
+            RISK + ATTENDANCE
+        ============================================= */}
 
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
 
-      {/* ================================================= */}
-      {/* RISK ASSESSMENT */}
-      {/* ================================================= */}
+          {/* RISK */}
 
-      <section className="mb-6">
+          <section className="rounded-3xl border border-violet-100 bg-white p-6 shadow-sm">
 
-        <div
-          className={`rounded-2xl border p-5 sm:p-6 ${
-            risk?.riskLevel === "Low Risk"
-              ? "border-emerald-200 bg-emerald-50"
-              : risk?.riskLevel === "Medium Risk"
-              ? "border-amber-200 bg-amber-50"
-              : "border-red-200 bg-red-50"
-          }`}
-        >
+            <div className="flex items-center justify-between">
 
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
 
-            <div>
+                <p className="text-sm text-slate-500">
+                  Academic Risk
+                </p>
 
-              <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                Academic Risk Assessment
-              </p>
+                <h2 className="mt-1 text-xl font-bold text-slate-800">
+                  {risk.riskLevel ||
+                    "Not Available"}
+                </h2>
 
-              <h3 className="mt-1 text-xl font-bold text-gray-900">
-                {risk?.riskLevel ||
-                  "Not Available"}
-              </h3>
+              </div>
 
-              <p className="mt-1 text-sm text-gray-600">
-                Your current academic risk score is{" "}
-                <strong>
-                  {risk?.riskScore ?? 0}
-                </strong>
-                .
-              </p>
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-2xl">
+                🛡️
+              </div>
 
             </div>
 
-            <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-2xl bg-white shadow-sm">
+            <div className="mt-6">
 
-              <span className="text-xs text-gray-400">
-                Score
-              </span>
+              <div className="mb-2 flex justify-between">
 
-              <span className="text-2xl font-bold text-gray-900">
-                {risk?.riskScore ?? 0}
-              </span>
+                <span className="text-xs text-slate-500">
+                  Risk Score
+                </span>
 
-            </div>
+                <span className="text-xs font-bold text-slate-700">
+                  {risk.riskScore || 0}/100
+                </span>
 
-          </div>
+              </div>
 
-          {risk?.riskFactors?.length > 0 && (
+              <div className="h-3 rounded-full bg-slate-100">
 
-            <div className="mt-5 border-t border-gray-200/70 pt-4">
-
-              <p className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">
-                Risk Factors
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-
-                {risk.riskFactors.map(
-                  (factor, index) => (
-                    <span
-                      key={index}
-                      className="rounded-lg bg-white px-3 py-2 text-xs font-medium text-gray-600 shadow-sm"
-                    >
-                      {factor}
-                    </span>
-                  )
-                )}
+                <div
+                  className="h-3 rounded-full bg-gradient-to-r from-blue-500 to-violet-600"
+                  style={{
+                    width: `${Math.min(
+                      Math.max(
+                        Number(
+                          risk.riskScore
+                        ) || 0,
+                        0
+                      ),
+                      100
+                    )}%`,
+                  }}
+                />
 
               </div>
 
             </div>
 
-          )}
+            {risk.riskFactors?.length > 0 && (
+
+              <div className="mt-5 space-y-2">
+
+                {risk.riskFactors.map(
+                  (factor, index) => (
+
+                    <div
+                      key={index}
+                      className="rounded-xl bg-violet-50 px-3 py-2 text-xs text-violet-700"
+                    >
+                      {factor}
+                    </div>
+
+                  )
+                )}
+
+              </div>
+
+            )}
+
+          </section>
+
+          {/* ATTENDANCE */}
+
+          <section className="rounded-3xl border border-violet-100 bg-white p-6 shadow-sm xl:col-span-2">
+
+            <p className="text-sm text-slate-500">
+              Attendance Overview
+            </p>
+
+            <h2 className="mt-1 text-xl font-bold text-slate-800">
+              Attendance Distribution
+            </h2>
+
+            <div className="h-[250px]">
+
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+              >
+
+                <PieChart>
+
+                  <Pie
+                    data={attendancePie}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={65}
+                    outerRadius={90}
+                    paddingAngle={4}
+                  >
+
+                    <Cell fill="#4f46e5" />
+
+                    <Cell fill="#ddd6fe" />
+
+                  </Pie>
+
+                  <Tooltip />
+
+                </PieChart>
+
+              </ResponsiveContainer>
+
+            </div>
+
+            <div className="flex justify-center gap-8 text-sm">
+
+              <span className="flex items-center gap-2">
+
+                <span className="h-3 w-3 rounded-full bg-indigo-600" />
+
+                Present
+
+              </span>
+
+              <span className="flex items-center gap-2">
+
+                <span className="h-3 w-3 rounded-full bg-violet-200" />
+
+                Absent
+
+              </span>
+
+            </div>
+
+          </section>
 
         </div>
 
-      </section>
-
-
-      {/* ================================================= */}
-      {/* CHARTS */}
-      {/* ================================================= */}
-
-      <section className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
-
-        {/* Course Performance */}
+        {/* =============================================
+            COURSE PERFORMANCE
+        ============================================= */}
 
         <ChartCard
           title="Course Performance"
-          description="Your marks across different courses."
+          subtitle="Your marks across subjects"
         >
 
-          <ResponsiveContainer
-            width="100%"
-            height="100%"
-          >
-
-            <BarChart
-              data={coursePerformance}
-              margin={{
-                top: 10,
-                right: 10,
-                left: -20,
-                bottom: 5,
-              }}
-            >
-
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke="#e5e7eb"
-              />
-
-              <XAxis
-                dataKey="courseCode"
-                tick={{
-                  fontSize: 11,
-                  fill: "#6b7280",
-                }}
-                axisLine={false}
-                tickLine={false}
-              />
-
-              <YAxis
-                domain={[0, 100]}
-                tick={{
-                  fontSize: 11,
-                  fill: "#6b7280",
-                }}
-                axisLine={false}
-                tickLine={false}
-              />
-
-              <Tooltip />
-
-              <Bar
-                dataKey="totalMarks"
-                fill="#2563eb"
-                radius={[6, 6, 0, 0]}
-                name="Marks"
-              />
-
-            </BarChart>
-
-          </ResponsiveContainer>
-
-        </ChartCard>
-
-
-        {/* Attendance */}
-
-        <ChartCard
-          title="Course Attendance"
-          description="Attendance percentage by course."
-        >
-
-          <ResponsiveContainer
-            width="100%"
-            height="100%"
-          >
-
-            <BarChart
-              data={courseAttendance}
-              margin={{
-                top: 10,
-                right: 10,
-                left: -20,
-                bottom: 5,
-              }}
-            >
-
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke="#e5e7eb"
-              />
-
-              <XAxis
-                dataKey="courseCode"
-                tick={{
-                  fontSize: 11,
-                  fill: "#6b7280",
-                }}
-                axisLine={false}
-                tickLine={false}
-              />
-
-              <YAxis
-                domain={[0, 100]}
-                tick={{
-                  fontSize: 11,
-                  fill: "#6b7280",
-                }}
-                axisLine={false}
-                tickLine={false}
-              />
-
-              <Tooltip />
-
-              <Bar
-                dataKey="attendancePercentage"
-                fill="#16a34a"
-                radius={[6, 6, 0, 0]}
-                name="Attendance"
-              />
-
-            </BarChart>
-
-          </ResponsiveContainer>
-
-        </ChartCard>
-
-
-        {/* Quiz */}
-
-        <ChartCard
-          title="Quiz Performance"
-          description="Your quiz scores."
-        >
-
-          {quizPerformance.length > 0 ? (
+          {performanceChart.length > 0 ? (
 
             <ResponsiveContainer
               width="100%"
-              height="100%"
-            >
-
-              <LineChart
-                data={quizPerformance}
-                margin={{
-                  top: 10,
-                  right: 10,
-                  left: -20,
-                  bottom: 5,
-                }}
-              >
-
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke="#e5e7eb"
-                />
-
-                <XAxis
-                  dataKey="quizTitle"
-                  tick={{
-                    fontSize: 10,
-                    fill: "#6b7280",
-                  }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-
-                <YAxis
-                  domain={[0, 100]}
-                  tick={{
-                    fontSize: 11,
-                    fill: "#6b7280",
-                  }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-
-                <Tooltip />
-
-                <Line
-                  type="monotone"
-                  dataKey="percentage"
-                  stroke="#9333ea"
-                  strokeWidth={3}
-                  dot={{
-                    r: 4,
-                    fill: "#9333ea",
-                  }}
-                  name="Score"
-                />
-
-              </LineChart>
-
-            </ResponsiveContainer>
-
-          ) : (
-            <EmptyChart text="No quiz data available." />
-          )}
-
-        </ChartCard>
-
-
-        {/* Assignments */}
-
-        <ChartCard
-          title="Assignment Performance"
-          description="Your assignment scores."
-        >
-
-          {assignmentChartData.length > 0 ? (
-
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
+              height={320}
             >
 
               <BarChart
-                data={assignmentChartData}
-                margin={{
-                  top: 10,
-                  right: 10,
-                  left: -20,
-                  bottom: 5,
-                }}
+                data={performanceChart}
               >
 
                 <CartesianGrid
                   strokeDasharray="3 3"
                   vertical={false}
-                  stroke="#e5e7eb"
                 />
 
-                <XAxis
-                  dataKey="assignmentTitle"
-                  tick={{
-                    fontSize: 10,
-                    fill: "#6b7280",
-                  }}
-                  axisLine={false}
-                  tickLine={false}
-                />
+                <XAxis dataKey="name" />
 
-                <YAxis
-                  domain={[0, 100]}
-                  tick={{
-                    fontSize: 11,
-                    fill: "#6b7280",
-                  }}
-                  axisLine={false}
-                  tickLine={false}
-                />
+                <YAxis domain={[0, 100]} />
 
                 <Tooltip />
 
                 <Bar
-                  dataKey="percentage"
-                  fill="#f97316"
-                  radius={[6, 6, 0, 0]}
-                  name="Percentage"
+                  dataKey="marks"
+                  fill="#4f46e5"
+                  radius={[
+                    8,
+                    8,
+                    0,
+                    0,
+                  ]}
                 />
 
               </BarChart>
@@ -748,290 +623,256 @@ function StudentDashboard() {
             </ResponsiveContainer>
 
           ) : (
-            <EmptyChart text="No assignment data available." />
+
+            <EmptyChart text="Loading course performance..." />
+
           )}
 
         </ChartCard>
 
-      </section>
+        {/* =============================================
+            COURSE ATTENDANCE
+        ============================================= */}
 
+        <ChartCard
+          title="Course-wise Attendance"
+          subtitle="Attendance percentage by subject"
+        >
 
-      {/* ================================================= */}
-      {/* COURSE SUMMARY TABLE */}
-      {/* ================================================= */}
+          {attendanceChart.length > 0 ? (
 
-      <section className="mb-6">
+            <ResponsiveContainer
+              width="100%"
+              height={320}
+            >
 
-        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+              <BarChart
+                data={attendanceChart}
+              >
 
-          <div className="border-b border-gray-100 px-5 py-5 sm:px-6">
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                />
 
-            <h2 className="text-lg font-bold text-gray-900">
-              Course Summary
-            </h2>
+                <XAxis dataKey="name" />
 
-            <p className="mt-1 text-sm text-gray-500">
-              Your academic performance by course.
-            </p>
+                <YAxis domain={[0, 100]} />
 
-          </div>
+                <Tooltip />
 
-          <div className="overflow-x-auto">
+                <Bar
+                  dataKey="percentage"
+                  fill="#7c3aed"
+                  radius={[
+                    8,
+                    8,
+                    0,
+                    0,
+                  ]}
+                />
 
-            <table className="w-full min-w-[700px]">
+              </BarChart>
 
-              <thead className="bg-gray-50">
+            </ResponsiveContainer>
 
-                <tr>
+          ) : (
 
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Course
-                  </th>
+            <EmptyChart text="Loading attendance data..." />
 
-                  <th className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Marks
-                  </th>
+          )}
 
-                  <th className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Grade
-                  </th>
+        </ChartCard>
 
-                  <th className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Attendance
-                  </th>
+        {/* =============================================
+            QUIZ PERFORMANCE
+        ============================================= */}
 
-                  <th className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Status
-                  </th>
+        <ChartCard
+          title="Quiz Performance"
+          subtitle="Your quiz scores"
+        >
 
-                </tr>
+          {quizChart.length > 0 ? (
 
-              </thead>
+            <ResponsiveContainer
+              width="100%"
+              height={320}
+            >
 
-              <tbody className="divide-y divide-gray-100">
+              <LineChart data={quizChart}>
 
-                {coursePerformance.map(
-                  (course, index) => {
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                />
 
-                    const attendanceData =
-                      courseAttendance.find(
-                        (item) =>
-                          item.courseCode ===
-                          course.courseCode
-                      );
+                <XAxis dataKey="name" />
 
-                    return (
+                <YAxis domain={[0, 100]} />
+
+                <Tooltip />
+
+                <Line
+                  type="monotone"
+                  dataKey="percentage"
+                  stroke="#4f46e5"
+                  strokeWidth={3}
+                  dot={{ r: 5 }}
+                />
+
+              </LineChart>
+
+            </ResponsiveContainer>
+
+          ) : (
+
+            <EmptyChart text="Loading quiz performance..." />
+
+          )}
+
+        </ChartCard>
+
+        {/* =============================================
+            ASSIGNMENT PERFORMANCE
+        ============================================= */}
+
+        <section className="rounded-3xl border border-violet-100 bg-white p-6 shadow-sm">
+
+          <h2 className="text-xl font-bold text-slate-800">
+            Assignment Performance
+          </h2>
+
+          <p className="mb-5 mt-1 text-sm text-slate-500">
+            Your recent assignment results
+          </p>
+
+          {assignmentPerformance.length > 0 ? (
+
+            <div className="overflow-x-auto">
+
+              <table className="w-full min-w-[650px]">
+
+                <thead>
+
+                  <tr className="border-b border-slate-100 text-left">
+
+                    <th className="px-4 py-3 text-xs uppercase text-slate-500">
+                      Assignment
+                    </th>
+
+                    <th className="px-4 py-3 text-xs uppercase text-slate-500">
+                      Course
+                    </th>
+
+                    <th className="px-4 py-3 text-xs uppercase text-slate-500">
+                      Marks
+                    </th>
+
+                    <th className="px-4 py-3 text-xs uppercase text-slate-500">
+                      Status
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+                <tbody>
+
+                  {assignmentPerformance.map(
+                    (item, index) => (
+
                       <tr
                         key={index}
-                        className="transition hover:bg-gray-50"
+                        className="border-b border-slate-50"
                       >
 
-                        <td className="px-5 py-4">
-
-                          <div>
-
-                            <p className="font-semibold text-gray-900">
-                              {course.courseCode}
-                            </p>
-
-                            <p className="mt-0.5 max-w-xs truncate text-xs text-gray-500">
-                              {course.courseName}
-                            </p>
-
-                          </div>
-
+                        <td className="px-4 py-4 text-sm font-semibold text-slate-700">
+                          {item.assignmentTitle}
                         </td>
 
-                        <td className="px-5 py-4 text-center font-semibold text-gray-800">
-                          {course.totalMarks}
+                        <td className="px-4 py-4 text-sm text-slate-500">
+                          {item.courseCode}
                         </td>
 
-                        <td className="px-5 py-4 text-center">
-
-                          <span className="rounded-lg bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600">
-                            {course.grade}
-                          </span>
-
+                        <td className="px-4 py-4 text-sm font-semibold text-indigo-600">
+                          {item.marksObtained} /{" "}
+                          {item.totalMarks}
                         </td>
 
-                        <td className="px-5 py-4 text-center font-medium text-gray-700">
-                          {attendanceData?.attendancePercentage ??
-                            0}
-                          %
-                        </td>
+                        <td className="px-4 py-4">
 
-                        <td className="px-5 py-4 text-center">
-
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                              course.performanceLevel ===
-                              "Excellent"
-                                ? "bg-emerald-50 text-emerald-700"
-                                : course.performanceLevel ===
-                                  "Good"
-                                ? "bg-blue-50 text-blue-700"
-                                : "bg-amber-50 text-amber-700"
-                            }`}
-                          >
-                            {course.performanceLevel ||
-                              "Good"}
+                          <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">
+                            {item.status}
                           </span>
 
                         </td>
 
                       </tr>
-                    );
-                  }
-                )}
 
-              </tbody>
+                    )
+                  )}
 
-            </table>
+                </tbody>
 
-          </div>
+              </table>
 
-        </div>
+            </div>
 
-      </section>
+          ) : (
 
+            <EmptyChart text="Loading assignment data..." />
 
-      {/* ================================================= */}
-      {/* ACADEMIC OVERVIEW */}
-      {/* ================================================= */}
+          )}
 
-      <section className="mb-6">
+        </section>
 
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
+        {/* =============================================
+            INSIGHTS
+        ============================================= */}
 
-          <div className="mb-5">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-            <h2 className="text-lg font-bold text-gray-900">
-              Academic Overview
-            </h2>
-
-            <p className="mt-1 text-sm text-gray-500">
-              Summary of your current academic activity.
-            </p>
-
-          </div>
-
-          <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">
-
-            <OverviewItem
-              label="Subjects"
-              value={
-                academics?.totalSubjects || 0
-              }
-            />
-
-            <OverviewItem
-              label="Classes Attended"
-              value={
-                attendance?.presentClasses || 0
-              }
-            />
-
-            <OverviewItem
-              label="Quizzes Attempted"
-              value={
-                quizzes?.attempted || 0
-              }
-            />
-
-            <OverviewItem
-              label="Assignments Graded"
-              value={
-                assignments?.graded || 0
-              }
-            />
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* ================================================= */}
-      {/* QUICK ACTIONS */}
-      {/* ================================================= */}
-
-      <section>
-
-        <div className="mb-4">
-
-          <h2 className="text-lg font-bold text-gray-900">
-            Quick Actions
-          </h2>
-
-          <p className="mt-1 text-sm text-gray-500">
-            Quickly access your academic information.
-          </p>
-
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-
-          <QuickAction
-            title="My Profile"
-            description="View your student profile."
-            icon="◉"
-            iconClass="bg-blue-50 text-blue-600"
-            path="/student-profile"
+          <InsightCard
+            title="Strengths"
+            icon="✨"
+            items={insights.strengths || []}
           />
 
-          <QuickAction
-            title="Academic Records"
-            description="View your marks and grades."
-            icon="▥"
-            iconClass="bg-purple-50 text-purple-600"
-            path="/academic-records"
+          <InsightCard
+            title="Areas to Improve"
+            icon="🎯"
+            items={insights.weaknesses || []}
           />
 
-          <QuickAction
-            title="Attendance"
-            description="Check your attendance details."
-            icon="◷"
-            iconClass="bg-emerald-50 text-emerald-600"
-            path="/attendance"
-          />
-
-          <QuickAction
-            title="Performance Insights"
-            description="View personalized insights."
-            icon="↗"
-            iconClass="bg-orange-50 text-orange-600"
-            path="/performance-insights"
+          <InsightCard
+            title="Recommendations"
+            icon="💡"
+            items={
+              insights.recommendations || []
+            }
           />
 
         </div>
 
-      </section>
-
+      </div>
     </Layout>
   );
 }
 
+// =====================================================
+// INFO BADGE
+// =====================================================
 
-/* ================================================= */
-/* COMPONENTS */
-/* ================================================= */
-
-function InfoCard({
-  label,
-  value,
-  valueClass = "text-gray-900",
-}) {
+function InfoBadge({ label, value }) {
   return (
-    <div className="rounded-xl border border-gray-100 bg-white px-5 py-4 shadow-sm">
+    <div className="rounded-xl bg-white/15 px-4 py-2 backdrop-blur">
 
-      <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+      <p className="text-xs text-blue-100">
         {label}
       </p>
 
-      <p
-        className={`mt-1 truncate text-base font-bold ${valueClass}`}
-      >
+      <p className="text-sm font-semibold">
         {value}
       </p>
 
@@ -1039,146 +880,152 @@ function InfoCard({
   );
 }
 
+// =====================================================
+// STAT CARD
+// =====================================================
 
 function StatCard({
   title,
   value,
   subtitle,
   icon,
-  iconClass,
 }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="rounded-3xl border border-violet-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
 
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between">
 
-        <div className="min-w-0">
+        <div>
 
-          <p className="truncate text-sm font-medium text-gray-500">
+          <p className="text-sm text-slate-500">
             {title}
           </p>
 
-          <p className="mt-2 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+          <p className="mt-2 text-3xl font-bold text-slate-800">
             {value}
+          </p>
+
+          <p className="mt-1 text-xs text-slate-400">
+            {subtitle}
           </p>
 
         </div>
 
-        <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg font-bold ${iconClass}`}
-        >
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-violet-600 text-xl text-white shadow-lg">
           {icon}
         </div>
 
       </div>
 
-      <p className="mt-4 truncate text-xs text-gray-400">
-        {subtitle}
-      </p>
-
     </div>
   );
 }
 
+// =====================================================
+// CHART CARD
+// =====================================================
 
 function ChartCard({
   title,
-  description,
+  subtitle,
   children,
 }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
+    <section className="rounded-3xl border border-violet-100 bg-white p-6 shadow-sm">
 
-      <div className="mb-5">
+      <h2 className="text-xl font-bold text-slate-800">
+        {title}
+      </h2>
 
-        <h2 className="text-lg font-bold text-gray-900">
-          {title}
-        </h2>
+      <p className="mb-5 mt-1 text-sm text-slate-500">
+        {subtitle}
+      </p>
 
-        <p className="mt-1 text-sm text-gray-500">
-          {description}
+      {children}
+
+    </section>
+  );
+}
+
+// =====================================================
+// EMPTY CHART
+// =====================================================
+
+function EmptyChart({ text }) {
+  return (
+    <div className="flex h-[250px] items-center justify-center">
+
+      <div className="text-center">
+
+        <div className="mb-3 text-3xl">
+          📊
+        </div>
+
+        <p className="text-sm text-slate-500">
+          {text}
         </p>
 
       </div>
 
-      <div className="h-[280px] min-w-0 sm:h-[320px]">
-        {children}
-      </div>
-
     </div>
   );
 }
 
+// =====================================================
+// INSIGHT CARD
+// =====================================================
 
-function EmptyChart({ text }) {
-  return (
-    <div className="flex h-full items-center justify-center rounded-xl bg-gray-50">
-
-      <p className="text-sm text-gray-400">
-        {text}
-      </p>
-
-    </div>
-  );
-}
-
-
-function OverviewItem({
-  label,
-  value,
-}) {
-  return (
-    <div>
-
-      <p className="text-xs font-medium text-gray-500">
-        {label}
-      </p>
-
-      <p className="mt-1 text-2xl font-bold text-gray-900">
-        {value}
-      </p>
-
-    </div>
-  );
-}
-
-
-function QuickAction({
+function InsightCard({
   title,
-  description,
   icon,
-  iconClass,
-  path,
+  items,
 }) {
   return (
-    <button
-      onClick={() => {
-        window.location.href = path;
-      }}
-      className="group rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:border-blue-100 hover:shadow-md"
-    >
+    <section className="rounded-3xl border border-violet-100 bg-white p-6 shadow-sm">
 
-      <div
-        className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold ${iconClass}`}
-      >
-        {icon}
+      <div className="mb-5 flex items-center gap-3">
+
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50">
+          {icon}
+        </div>
+
+        <h2 className="font-bold text-slate-800">
+          {title}
+        </h2>
+
       </div>
 
-      <h3 className="font-semibold text-gray-900">
-        {title}
-      </h3>
+      {items.length > 0 ? (
 
-      <p className="mt-1 text-sm leading-5 text-gray-500">
-        {description}
-      </p>
+        <div className="space-y-3">
 
-      <p className="mt-4 text-xs font-semibold text-blue-600 opacity-0 transition group-hover:opacity-100">
-        Open →
-      </p>
+          {items.map((item, index) => (
 
-    </button>
+            <div
+              key={index}
+              className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600"
+            >
+              {item}
+            </div>
+
+          ))}
+
+        </div>
+
+      ) : (
+
+        <p className="text-sm text-slate-400">
+          No information available.
+        </p>
+
+      )}
+
+    </section>
   );
 }
 
+// =====================================================
+// VERY IMPORTANT
+// =====================================================
 
 export default StudentDashboard;
