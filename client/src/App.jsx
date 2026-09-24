@@ -20,6 +20,7 @@ import FacultyAssignments from "./pages/FacultyAssignments";
 import FacultySubmissions from "./pages/FacultySubmissions";
 import FacultyCourses from "./pages/FacultyCourses";
 import FacultyAnalytics from "./pages/FacultyAnalytics";
+import FacultyStudentDetails from "./pages/FacultyStudentDetails";
 
 import NotFound from "./pages/NotFound";
 
