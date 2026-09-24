@@ -496,4 +496,5 @@ module.exports = {
   getStudentAcademicPerformance,
   getStudentAttendance,
   getStudentQuizPerformance,
+  getStudentAssignmentPerformance,
 };
