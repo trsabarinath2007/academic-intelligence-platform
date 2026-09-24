@@ -23,6 +23,8 @@ import FacultyAnalytics from "./pages/FacultyAnalytics";
 import FacultyStudentDetails from "./pages/FacultyStudentDetails";
 
 import AdminStudents from "./pages/AdminStudents";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminCourses from "./pages/AdminCourses";
 
 import NotFound from "./pages/NotFound";
 
@@ -138,6 +140,14 @@ function App() {
           path="/admin-students"
           element={<AdminStudents />}
         />
+        <Route
+  path="/admin-dashboard"
+  element={<AdminDashboard />}
+/>
+<Route
+  path="/admin-courses"
+  element={<AdminCourses />}
+/>
 
         {/* 404 */}
 
