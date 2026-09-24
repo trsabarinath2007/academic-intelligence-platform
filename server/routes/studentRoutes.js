@@ -8,6 +8,7 @@ const {
   updateStudent,
   deleteStudent,
   getStudentAcademicPerformance,
+  getStudentAttendance,
 } = require("../controllers/studentController");
 
 const {
@@ -39,6 +40,14 @@ router.get(
   protect,
   authorize("faculty", "admin"),
   getStudentAcademicPerformance
+);
+
+// Faculty/Admin - get student's attendance
+router.get(
+  "/:id/attendance",
+  protect,
+  authorize("faculty", "admin"),
+  getStudentAttendance
 );
 
 // Faculty/Admin - get one student
