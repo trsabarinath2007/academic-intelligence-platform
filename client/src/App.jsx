@@ -21,6 +21,7 @@ import FacultySubmissions from "./pages/FacultySubmissions";
 import FacultyCourses from "./pages/FacultyCourses";
 import FacultyAnalytics from "./pages/FacultyAnalytics";
 import FacultyStudentDetails from "./pages/FacultyStudentDetails";
+import AdminStudents from "./pages/AdminStudents";
 
 import NotFound from "./pages/NotFound";
 
@@ -121,6 +122,10 @@ function App() {
 <Route
   path="/faculty-students/:id"
   element={<FacultyStudentDetails />}
+/>
+<Route
+  path="/admin-students"
+  element={<AdminStudents />}
 />
 
       </Routes>
