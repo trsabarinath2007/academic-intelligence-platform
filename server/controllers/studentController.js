@@ -400,6 +400,91 @@ const getStudentQuizPerformance = async (req, res) => {
     });
   }
 };
+// Get student's assignment performance
+const getStudentAssignmentPerformance = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
+    }
+
+    const submissions = await AssignmentSubmission.find({
+      student: student._id,
+    })
+      .populate({
+        path: "assignment",
+        select: "title totalMarks dueDate course",
+        populate: {
+          path: "course",
+          select: "courseCode courseName",
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    const assignments = submissions.map((submission) => ({
+      assignmentTitle: submission.assignment?.title,
+      courseCode: submission.assignment?.course?.courseCode,
+      courseName: submission.assignment?.course?.courseName,
+      totalMarks: submission.assignment?.totalMarks,
+      marksObtained: submission.marksObtained,
+      status: submission.status,
+      percentage:
+        submission.assignment?.totalMarks > 0
+          ? Math.round(
+              (submission.marksObtained /
+                submission.assignment.totalMarks) *
+                100
+            )
+          : 0,
+      feedback: submission.feedback,
+      submittedAt: submission.createdAt,
+      dueDate: submission.assignment?.dueDate,
+    }));
+
+    const gradedAssignments = assignments.filter(
+      (assignment) =>
+        assignment.marksObtained !== undefined &&
+        assignment.marksObtained !== null
+    );
+
+    const averagePercentage =
+      gradedAssignments.length === 0
+        ? 0
+        : Math.round(
+            gradedAssignments.reduce(
+              (sum, assignment) =>
+                sum + assignment.percentage,
+              0
+            ) / gradedAssignments.length
+          );
+
+    res.status(200).json({
+      success: true,
+      studentId: student.studentId,
+      summary: {
+        assignmentsSubmitted: assignments.length,
+        assignmentsGraded: gradedAssignments.length,
+        averagePercentage,
+      },
+      assignments,
+    });
+  } catch (error) {
+    console.error(
+      "Get student assignment performance error:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch assignment performance",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   getAllStudents,
