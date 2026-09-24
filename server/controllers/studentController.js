@@ -327,6 +327,78 @@ const getStudentAttendance = async (req, res) => {
     });
   }
 };
+// Get student's quiz performance
+const getStudentQuizPerformance = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
+    }
+
+    const attempts = await QuizAttempt.find({
+      student: student._id,
+    })
+      .populate({
+        path: "quiz",
+        select: "title totalMarks course",
+        populate: {
+          path: "course",
+          select: "courseCode courseName",
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    const quizzes = attempts.map((attempt) => ({
+      quizTitle: attempt.quiz?.title,
+      courseCode: attempt.quiz?.course?.courseCode,
+      courseName: attempt.quiz?.course?.courseName,
+      score: attempt.score,
+      totalMarks: attempt.quiz?.totalMarks,
+      percentage:
+        attempt.quiz?.totalMarks > 0
+          ? Math.round(
+              (attempt.score / attempt.quiz.totalMarks) * 100
+            )
+          : 0,
+      attemptedAt: attempt.createdAt,
+    }));
+
+    const averagePercentage =
+      quizzes.length === 0
+        ? 0
+        : Math.round(
+            quizzes.reduce(
+              (sum, quiz) => sum + quiz.percentage,
+              0
+            ) / quizzes.length
+          );
+
+    res.status(200).json({
+      success: true,
+      studentId: student.studentId,
+      summary: {
+        quizzesAttempted: quizzes.length,
+        averagePercentage,
+      },
+      quizzes,
+    });
+  } catch (error) {
+    console.error(
+      "Get student quiz performance error:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch quiz performance",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   getAllStudents,
