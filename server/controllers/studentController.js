@@ -1,5 +1,6 @@
 const Student = require("../models/Student");
 const User = require("../models/User");
+const AcademicRecord = require("../models/AcademicRecord");
 
 // Get all students
 const getAllStudents = async (req, res) => {
@@ -208,6 +209,55 @@ const deleteStudent = async (req, res) => {
   }
 };
 
+// Get student's academic performance
+const getStudentAcademicPerformance = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
+    }
+
+    const records = await AcademicRecord.find({
+      student: student._id,
+    }).populate(
+      "course",
+      "courseCode courseName credits"
+    );
+
+    const performance = records.map((record) => ({
+      courseCode: record.course?.courseCode,
+      courseName: record.course?.courseName,
+      credits: record.course?.credits,
+      semester: record.semester,
+      internalMarks: record.internalMarks,
+      externalMarks: record.externalMarks,
+      totalMarks: record.totalMarks,
+      grade: record.grade,
+    }));
+
+    res.status(200).json({
+      success: true,
+      studentId: student.studentId,
+      performance,
+    });
+  } catch (error) {
+    console.error(
+      "Get student academic performance error:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch academic performance",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllStudents,
   getStudentById,
@@ -215,4 +265,5 @@ module.exports = {
   createStudent,
   updateStudent,
   deleteStudent,
+  getStudentAcademicPerformance,
 };
