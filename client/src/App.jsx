@@ -18,6 +18,7 @@ import FacultyStudents from "./pages/FacultyStudents";
 import FacultyAttendance from "./pages/FacultyAttendance";
 import FacultyAssignments from "./pages/FacultyAssignments";
 import FacultySubmissions from "./pages/FacultySubmissions";
+import FacultyCourses from "./pages/FacultyCourses";
 
 import NotFound from "./pages/NotFound";
 
