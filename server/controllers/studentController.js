@@ -409,4 +409,5 @@ module.exports = {
   deleteStudent,
   getStudentAcademicPerformance,
   getStudentAttendance,
+  getStudentQuizPerformance,
 };
