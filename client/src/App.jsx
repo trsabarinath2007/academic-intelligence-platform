@@ -117,6 +117,10 @@ function App() {
   path="/faculty-analytics"
   element={<FacultyAnalytics />}
 />
+<Route
+  path="/faculty-students/:id"
+  element={<FacultyStudentDetails />}
+/>
 
       </Routes>
     </BrowserRouter>
