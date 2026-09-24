@@ -113,6 +113,10 @@ function App() {
   path="/faculty-courses"
   element={<FacultyCourses />}
 />
+<Route
+  path="/faculty-analytics"
+  element={<FacultyAnalytics />}
+/>
 
       </Routes>
     </BrowserRouter>
