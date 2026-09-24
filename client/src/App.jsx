@@ -21,6 +21,7 @@ import FacultySubmissions from "./pages/FacultySubmissions";
 import FacultyCourses from "./pages/FacultyCourses";
 import FacultyAnalytics from "./pages/FacultyAnalytics";
 import FacultyStudentDetails from "./pages/FacultyStudentDetails";
+
 import AdminStudents from "./pages/AdminStudents";
 
 import NotFound from "./pages/NotFound";
@@ -30,11 +31,22 @@ function App() {
     <BrowserRouter>
       <Routes>
 
-        <Route path="/" element={<Home />} />
+        {/* GENERAL */}
 
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/"
+          element={<Home />}
+        />
 
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/dashboard"
+          element={<Dashboard />}
+        />
 
         {/* STUDENT */}
 
@@ -91,6 +103,11 @@ function App() {
         />
 
         <Route
+          path="/faculty-students/:id"
+          element={<FacultyStudentDetails />}
+        />
+
+        <Route
           path="/faculty-attendance"
           element={<FacultyAttendance />}
         />
@@ -105,28 +122,29 @@ function App() {
           element={<FacultySubmissions />}
         />
 
+        <Route
+          path="/faculty-courses"
+          element={<FacultyCourses />}
+        />
+
+        <Route
+          path="/faculty-analytics"
+          element={<FacultyAnalytics />}
+        />
+
+        {/* ADMIN */}
+
+        <Route
+          path="/admin-students"
+          element={<AdminStudents />}
+        />
+
         {/* 404 */}
 
         <Route
           path="*"
           element={<NotFound />}
         />
-        <Route
-  path="/faculty-courses"
-  element={<FacultyCourses />}
-/>
-<Route
-  path="/faculty-analytics"
-  element={<FacultyAnalytics />}
-/>
-<Route
-  path="/faculty-students/:id"
-  element={<FacultyStudentDetails />}
-/>
-<Route
-  path="/admin-students"
-  element={<AdminStudents />}
-/>
 
       </Routes>
     </BrowserRouter>

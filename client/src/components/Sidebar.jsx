@@ -80,7 +80,7 @@ function Sidebar({ role = "student", isOpen, onClose }) {
     },
     {
       label: "Analytics",
-      path: "/faculty-dashboard",
+      path: "/faculty-analytics",
       icon: "analytics",
     },
   ];
@@ -88,44 +88,29 @@ function Sidebar({ role = "student", isOpen, onClose }) {
   const adminLinks = [
     {
       label: "Dashboard",
-      path: "/faculty-dashboard",
+      path: "/admin-dashboard",
       icon: "dashboard",
     },
     {
       label: "Students",
-      path: "/faculty-students",
+      path: "/admin-students",
       icon: "students",
     },
     {
       label: "Courses",
-      path: "/faculty-courses",
+      path: "/admin-courses",
       icon: "courses",
     },
     {
-      label: "Attendance",
-      path: "/faculty-attendance",
-      icon: "attendance",
-    },
-    {
-      label: "Assignments",
-      path: "/faculty-assignments",
-      icon: "assignment",
-    },
-    {
-      label: "Submissions",
-      path: "/faculty-submissions",
-      icon: "submissions",
+      label: "Faculty",
+      path: "/admin-faculty",
+      icon: "faculty",
     },
     {
       label: "Analytics",
-      path: "/faculty-dashboard",
+      path: "/admin-analytics",
       icon: "analytics",
     },
-    {
-  label: "Analytics",
-  path: "/faculty-analytics",
-  icon: "analytics",
-},
   ];
 
   const links =
@@ -184,6 +169,16 @@ function Sidebar({ role = "student", isOpen, onClose }) {
             <path d="M3 20c.6-3.2 2.7-5 6-5s5.4 1.8 6 5" />
             <path d="M16 5.5a3 3 0 0 1 0 5.8" />
             <path d="M18 15c1.8.7 2.8 2 3 4" />
+          </svg>
+        );
+
+      case "faculty":
+        return (
+          <svg {...commonProps}>
+            <circle cx="12" cy="7" r="3" />
+            <path d="M5 21c.8-4 3-6 7-6s6.2 2 7 6" />
+            <path d="M4 11h4" />
+            <path d="M16 11h4" />
           </svg>
         );
 
@@ -314,6 +309,7 @@ function Sidebar({ role = "student", isOpen, onClose }) {
         {/* Brand */}
         <div className="flex h-[82px] items-center border-b border-[#EEF1F5] px-6">
           <div className="flex items-center gap-3">
+
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF3FF] text-[#315EFB]">
               <svg
                 width="22"
@@ -346,11 +342,13 @@ function Sidebar({ role = "student", isOpen, onClose }) {
                   : "Student Portal"}
               </p>
             </div>
+
           </div>
         </div>
 
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto px-3 py-6">
+
           <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#98A2B3]">
             {role === "student"
               ? "Student"
@@ -360,6 +358,7 @@ function Sidebar({ role = "student", isOpen, onClose }) {
           </p>
 
           <nav className="space-y-1">
+
             {links.map((link) => (
               <NavLink
                 key={link.path + link.label}
@@ -367,14 +366,14 @@ function Sidebar({ role = "student", isOpen, onClose }) {
                 onClick={onClose}
                 className={({ isActive }) =>
                   `
-                  group flex items-center gap-3 rounded-xl px-3 py-3
-                  text-sm font-medium transition-all duration-200
-                  ${
-                    isActive
-                      ? "bg-[#EEF3FF] text-[#315EFB]"
-                      : "text-[#667085] hover:bg-[#F8FAFC] hover:text-[#172033]"
-                  }
-                `
+                    group flex items-center gap-3 rounded-xl px-3 py-3
+                    text-sm font-medium transition-all duration-200
+                    ${
+                      isActive
+                        ? "bg-[#EEF3FF] text-[#315EFB]"
+                        : "text-[#667085] hover:bg-[#F8FAFC] hover:text-[#172033]"
+                    }
+                  `
                 }
               >
                 {({ isActive }) => (
@@ -398,11 +397,13 @@ function Sidebar({ role = "student", isOpen, onClose }) {
                 )}
               </NavLink>
             ))}
+
           </nav>
         </div>
 
         {/* Bottom section */}
         <div className="border-t border-[#EEF1F5] p-3">
+
           <button
             type="button"
             onClick={onClose}
@@ -426,6 +427,7 @@ function Sidebar({ role = "student", isOpen, onClose }) {
 
             <span>Logout</span>
           </button>
+
         </div>
       </aside>
     </>
