@@ -121,6 +121,11 @@ function Sidebar({ role = "student", isOpen, onClose }) {
       path: "/faculty-dashboard",
       icon: "analytics",
     },
+    {
+  label: "Analytics",
+  path: "/faculty-analytics",
+  icon: "analytics",
+},
   ];
 
   const links =
