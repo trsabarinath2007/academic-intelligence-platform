@@ -1,6 +1,7 @@
 const Student = require("../models/Student");
 const User = require("../models/User");
 const AcademicRecord = require("../models/AcademicRecord");
+const Attendance = require("../models/Attendance");
 
 // Get all students
 const getAllStudents = async (req, res) => {
@@ -258,6 +259,74 @@ const getStudentAcademicPerformance = async (req, res) => {
   }
 };
 
+// Get student's attendance
+const getStudentAttendance = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
+    }
+
+    const attendance = await Attendance.find({
+      student: student._id,
+    }).populate(
+      "course",
+      "courseCode courseName credits"
+    );
+
+    const result = attendance.map((record) => ({
+      courseCode: record.course?.courseCode,
+      courseName: record.course?.courseName,
+      status: record.status,
+      date: record.date,
+    }));
+
+    const totalClasses = result.length;
+
+    const presentClasses = result.filter(
+      (record) => record.status === "Present"
+    ).length;
+
+    const absentClasses = result.filter(
+      (record) => record.status === "Absent"
+    ).length;
+
+    const attendancePercentage =
+      totalClasses === 0
+        ? 0
+        : Math.round(
+            (presentClasses / totalClasses) * 100
+          );
+
+    res.status(200).json({
+      success: true,
+      studentId: student.studentId,
+      summary: {
+        totalClasses,
+        presentClasses,
+        absentClasses,
+        attendancePercentage,
+      },
+      attendance: result,
+    });
+  } catch (error) {
+    console.error(
+      "Get student attendance error:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch student attendance",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllStudents,
   getStudentById,
@@ -266,4 +335,5 @@ module.exports = {
   updateStudent,
   deleteStudent,
   getStudentAcademicPerformance,
+  getStudentAttendance,
 };
