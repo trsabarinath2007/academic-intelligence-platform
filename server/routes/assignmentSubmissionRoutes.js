@@ -1,10 +1,12 @@
 const express = require("express");
+
 const router = express.Router();
 
 const {
   submitAssignment,
   getMySubmissions,
   gradeSubmission,
+  getAllSubmissions,
 } = require("../controllers/assignmentSubmissionController");
 
 const {
@@ -28,10 +30,19 @@ router.get(
   getMySubmissions
 );
 
+// Get All Submissions - Faculty/Admin
+router.get(
+  "/",
+  protect,
+  authorize("faculty", "admin"),
+  getAllSubmissions
+);
+
 // Grade Assignment Submission
 router.put(
   "/:submissionId/grade",
   protect,
+  authorize("faculty", "admin"),
   gradeSubmission
 );
 

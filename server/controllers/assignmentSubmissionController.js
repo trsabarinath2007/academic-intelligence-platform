@@ -129,8 +129,9 @@ const gradeSubmission = async (req, res) => {
       });
     }
 
-    const submission = await AssignmentSubmission.findById(submissionId)
-      .populate("assignment", "totalMarks");
+    const submission = await AssignmentSubmission.findById(
+      submissionId
+    ).populate("assignment", "totalMarks");
 
     if (!submission) {
       return res.status(404).json({
@@ -170,8 +171,46 @@ const gradeSubmission = async (req, res) => {
 };
 
 
+// Get All Submissions - Faculty/Admin
+const getAllSubmissions = async (req, res) => {
+  try {
+    const submissions = await AssignmentSubmission.find()
+      .populate({
+        path: "student",
+        select: "studentId department semester section",
+        populate: {
+          path: "user",
+          select: "name email",
+        },
+      })
+      .populate({
+        path: "assignment",
+        select: "title description dueDate totalMarks",
+        populate: {
+          path: "course",
+          select: "courseCode courseName",
+        },
+      })
+      .sort({ submittedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: submissions.length,
+      submissions,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to get all submissions",
+      error: error.message,
+    });
+  }
+};
+
+
 module.exports = {
   submitAssignment,
   getMySubmissions,
   gradeSubmission,
+  getAllSubmissions,
 };
