@@ -9,6 +9,7 @@ const {
   deleteStudent,
   getStudentAcademicPerformance,
   getStudentAttendance,
+  getStudentQuizPerformance,
 } = require("../controllers/studentController");
 
 const {
@@ -18,7 +19,9 @@ const {
 
 const router = express.Router();
 
-// Student - view own profile
+// ==========================================
+// STUDENT - VIEW OWN PROFILE
+// ==========================================
 router.get(
   "/profile",
   protect,
@@ -26,7 +29,9 @@ router.get(
   getMyStudentProfile
 );
 
-// Faculty/Admin - get all students
+// ==========================================
+// FACULTY / ADMIN - GET ALL STUDENTS
+// ==========================================
 router.get(
   "/",
   protect,
@@ -34,7 +39,9 @@ router.get(
   getAllStudents
 );
 
-// Faculty/Admin - get student's academic performance
+// ==========================================
+// FACULTY / ADMIN - ACADEMIC PERFORMANCE
+// ==========================================
 router.get(
   "/:id/academic-performance",
   protect,
@@ -42,7 +49,9 @@ router.get(
   getStudentAcademicPerformance
 );
 
-// Faculty/Admin - get student's attendance
+// ==========================================
+// FACULTY / ADMIN - ATTENDANCE
+// ==========================================
 router.get(
   "/:id/attendance",
   protect,
@@ -50,7 +59,19 @@ router.get(
   getStudentAttendance
 );
 
-// Faculty/Admin - get one student
+// ==========================================
+// FACULTY / ADMIN - QUIZ PERFORMANCE
+// ==========================================
+router.get(
+  "/:id/quiz-performance",
+  protect,
+  authorize("faculty", "admin"),
+  getStudentQuizPerformance
+);
+
+// ==========================================
+// FACULTY / ADMIN - GET ONE STUDENT
+// ==========================================
 router.get(
   "/:id",
   protect,
@@ -58,7 +79,9 @@ router.get(
   getStudentById
 );
 
-// Faculty/Admin - create student
+// ==========================================
+// FACULTY / ADMIN - CREATE STUDENT
+// ==========================================
 router.post(
   "/",
   protect,
@@ -66,7 +89,9 @@ router.post(
   createStudent
 );
 
-// Faculty/Admin - update student
+// ==========================================
+// FACULTY / ADMIN - UPDATE STUDENT
+// ==========================================
 router.put(
   "/:id",
   protect,
@@ -74,7 +99,9 @@ router.put(
   updateStudent
 );
 
-// Admin - delete student
+// ==========================================
+// ADMIN - DELETE STUDENT
+// ==========================================
 router.delete(
   "/:id",
   protect,
