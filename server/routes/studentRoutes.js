@@ -10,6 +10,7 @@ const {
   getStudentAcademicPerformance,
   getStudentAttendance,
   getStudentQuizPerformance,
+  getStudentAssignmentPerformance,
 } = require("../controllers/studentController");
 
 const {
@@ -67,6 +68,16 @@ router.get(
   protect,
   authorize("faculty", "admin"),
   getStudentQuizPerformance
+);
+
+// ==========================================
+// FACULTY / ADMIN - ASSIGNMENT PERFORMANCE
+// ==========================================
+router.get(
+  "/:id/assignment-performance",
+  protect,
+  authorize("faculty", "admin"),
+  getStudentAssignmentPerformance
 );
 
 // ==========================================
