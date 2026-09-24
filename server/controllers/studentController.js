@@ -2,6 +2,7 @@ const Student = require("../models/Student");
 const User = require("../models/User");
 const AcademicRecord = require("../models/AcademicRecord");
 const Attendance = require("../models/Attendance");
+const QuizAttempt = require("../models/QuizAttempt");
 
 // Get all students
 const getAllStudents = async (req, res) => {
