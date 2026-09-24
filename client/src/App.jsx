@@ -108,6 +108,10 @@ function App() {
           path="*"
           element={<NotFound />}
         />
+        <Route
+  path="/faculty-courses"
+  element={<FacultyCourses />}
+/>
 
       </Routes>
     </BrowserRouter>
