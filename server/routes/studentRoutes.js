@@ -7,13 +7,17 @@ const {
   createStudent,
   updateStudent,
   deleteStudent,
+  getStudentAcademicPerformance,
 } = require("../controllers/studentController");
 
-const { protect, authorize } = require("../middleware/authMiddleware");
+const {
+  protect,
+  authorize,
+} = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// Logged-in student's own profile
+// Student - view own profile
 router.get(
   "/profile",
   protect,
@@ -29,6 +33,14 @@ router.get(
   getAllStudents
 );
 
+// Faculty/Admin - get student's academic performance
+router.get(
+  "/:id/academic-performance",
+  protect,
+  authorize("faculty", "admin"),
+  getStudentAcademicPerformance
+);
+
 // Faculty/Admin - get one student
 router.get(
   "/:id",
@@ -37,7 +49,7 @@ router.get(
   getStudentById
 );
 
-// Admin/Faculty - create student
+// Faculty/Admin - create student
 router.post(
   "/",
   protect,
@@ -45,7 +57,7 @@ router.post(
   createStudent
 );
 
-// Admin/Faculty - update student
+// Faculty/Admin - update student
 router.put(
   "/:id",
   protect,
