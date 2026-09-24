@@ -10,10 +10,13 @@ function FacultyStudentDetails() {
   const [performance, setPerformance] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [attendanceSummary, setAttendanceSummary] = useState(null);
+  const [quizzes, setQuizzes] = useState([]);
+  const [quizSummary, setQuizSummary] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [performanceLoading, setPerformanceLoading] = useState(true);
   const [attendanceLoading, setAttendanceLoading] = useState(true);
+  const [quizLoading, setQuizLoading] = useState(true);
 
   const [error, setError] = useState("");
 
@@ -21,6 +24,7 @@ function FacultyStudentDetails() {
     fetchStudent();
     fetchPerformance();
     fetchAttendance();
+    fetchQuizPerformance();
   }, [id]);
 
   const fetchStudent = async () => {
@@ -110,12 +114,42 @@ function FacultyStudentDetails() {
     }
   };
 
+  const fetchQuizPerformance = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(
+        `http://localhost:5000/api/students/${id}/quiz-performance`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to fetch quiz performance"
+        );
+      }
+
+      setQuizzes(data.quizzes || []);
+      setQuizSummary(data.summary || null);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setQuizLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <Layout
         role="faculty"
         title="Student Details"
-        description="View student information and academic performance"
+        description="View student information and performance"
       >
         <div className="flex min-h-[400px] items-center justify-center">
           <p className="text-gray-500">
@@ -144,7 +178,7 @@ function FacultyStudentDetails() {
     <Layout
       role="faculty"
       title="Student Details"
-      description="View student information, academics and attendance"
+      description="View student information and academic performance"
     >
       {/* Back Button */}
       <button
@@ -215,6 +249,20 @@ function FacultyStudentDetails() {
         <SummaryCard
           title="Attendance"
           value={`${attendanceSummary?.attendancePercentage ?? 0}%`}
+          highlight
+        />
+      </div>
+
+      {/* Quiz Summary */}
+      <div className="mb-6 grid gap-4 sm:grid-cols-2">
+        <SummaryCard
+          title="Quizzes Attempted"
+          value={quizSummary?.quizzesAttempted ?? 0}
+        />
+
+        <SummaryCard
+          title="Average Quiz Score"
+          value={`${quizSummary?.averagePercentage ?? 0}%`}
           highlight
         />
       </div>
@@ -321,7 +369,7 @@ function FacultyStudentDetails() {
       </div>
 
       {/* Attendance Details */}
-      <div className="rounded-2xl border border-violet-100 bg-white shadow-sm">
+      <div className="mb-6 rounded-2xl border border-violet-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 p-6">
           <h2 className="text-lg font-bold text-[#172033]">
             Attendance Details
@@ -399,6 +447,108 @@ function FacultyStudentDetails() {
           </div>
         )}
       </div>
+
+      {/* Quiz Performance */}
+      <div className="rounded-2xl border border-violet-100 bg-white shadow-sm">
+        <div className="border-b border-gray-100 p-6">
+          <h2 className="text-lg font-bold text-[#172033]">
+            Quiz Performance
+          </h2>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Student's quiz scores and performance
+          </p>
+        </div>
+
+        {quizLoading ? (
+          <div className="p-8 text-center text-gray-500">
+            Loading quiz performance...
+          </div>
+        ) : quizzes.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            No quiz attempts found.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[750px]">
+              <thead>
+                <tr className="border-b border-gray-100 bg-[#faf9ff] text-left">
+                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
+                    Quiz
+                  </th>
+
+                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
+                    Course
+                  </th>
+
+                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
+                    Score
+                  </th>
+
+                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
+                    Percentage
+                  </th>
+
+                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
+                    Attempted
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {quizzes.map((quiz, index) => (
+                  <tr
+                    key={index}
+                    className="border-b border-gray-50 hover:bg-[#faf9ff]"
+                  >
+                    <td className="px-6 py-4">
+                      <p className="font-semibold text-[#172033]">
+                        {quiz.quizTitle}
+                      </p>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <p className="font-medium text-[#172033]">
+                        {quiz.courseCode}
+                      </p>
+
+                      <p className="mt-1 text-sm text-gray-500">
+                        {quiz.courseName}
+                      </p>
+                    </td>
+
+                    <td className="px-6 py-4 text-sm font-semibold text-[#172033]">
+                      {quiz.score} / {quiz.totalMarks}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                          quiz.percentage >= 80
+                            ? "bg-green-50 text-green-700"
+                            : quiz.percentage >= 60
+                            ? "bg-blue-50 text-blue-700"
+                            : "bg-red-50 text-red-700"
+                        }`}
+                      >
+                        {quiz.percentage}%
+                      </span>
+                    </td>
+
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {quiz.attemptedAt
+                        ? new Date(
+                            quiz.attemptedAt
+                          ).toLocaleDateString()
+                        : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </Layout>
   );
 }
@@ -417,7 +567,11 @@ function InfoBox({ label, value }) {
   );
 }
 
-function SummaryCard({ title, value, highlight = false }) {
+function SummaryCard({
+  title,
+  value,
+  highlight = false,
+}) {
   return (
     <div className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
       <p className="text-sm text-gray-500">{title}</p>
