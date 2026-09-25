@@ -26,6 +26,7 @@ import FacultyStudentDetails from "./pages/FacultyStudentDetails";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminStudents from "./pages/AdminStudents";
 import AdminCourses from "./pages/AdminCourses";
+import FacultyLearningMaterials from "./pages/FacultyLearningMaterials";
 
 import NotFound from "./pages/NotFound";
 
@@ -155,6 +156,10 @@ export default function App() {
           path="*"
           element={<Navigate to="/404" replace />}
         />
+        <Route
+  path="/faculty-learning-materials"
+  element={<FacultyLearningMaterials />}
+/>
 
       </Routes>
     </BrowserRouter>
