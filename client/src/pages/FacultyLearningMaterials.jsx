@@ -4,26 +4,64 @@ import {
   Plus,
   Trash2,
   BookOpen,
+  Pencil,
+  X,
+  Upload,
 } from "lucide-react";
 
 import { apiRequest } from "../api";
 
 export default function FacultyLearningMaterials() {
   const [materials, setMaterials] = useState([]);
+  const [courses, setCourses] = useState([]);
+
   const [loading, setLoading] = useState(true);
+  const [coursesLoading, setCoursesLoading] = useState(true);
+
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  const [editingId, setEditingId] = useState(null);
 
   const [form, setForm] = useState({
     title: "",
     description: "",
     course: "",
     type: "document",
-    fileUrl: "",
     externalUrl: "",
     topic: "",
     isPublished: true,
   });
+
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  // ==========================================
+  // FETCH COURSES
+  // ==========================================
+
+  const fetchCourses = async () => {
+    try {
+      setCoursesLoading(true);
+
+      const response = await apiRequest("/courses", {
+        method: "GET",
+      });
+
+      setCourses(response.courses || []);
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        err.message || "Failed to load courses"
+      );
+    } finally {
+      setCoursesLoading(false);
+    }
+  };
+
+  // ==========================================
+  // FETCH MATERIALS
+  // ==========================================
 
   const fetchMaterials = async () => {
     try {
@@ -38,6 +76,8 @@ export default function FacultyLearningMaterials() {
 
       setMaterials(response.materials || []);
     } catch (err) {
+      console.error(err);
+
       setError(
         err.message ||
           "Failed to load learning materials"
@@ -48,17 +88,77 @@ export default function FacultyLearningMaterials() {
   };
 
   useEffect(() => {
+    fetchCourses();
     fetchMaterials();
   }, []);
 
+  // ==========================================
+  // INPUT CHANGE
+  // ==========================================
+
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const {
+      name,
+      value,
+      type,
+      checked,
+    } = e.target;
 
     setForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : value,
     }));
   };
+
+  // ==========================================
+  // FILE CHANGE
+  // ==========================================
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      setSelectedFile(null);
+      return;
+    }
+
+    setSelectedFile(file);
+  };
+
+  // ==========================================
+  // RESET FORM
+  // ==========================================
+
+  const resetForm = () => {
+    setForm({
+      title: "",
+      description: "",
+      course: "",
+      type: "document",
+      externalUrl: "",
+      topic: "",
+      isPublished: true,
+    });
+
+    setSelectedFile(null);
+    setEditingId(null);
+
+    const fileInput =
+      document.getElementById(
+        "learning-material-file"
+      );
+
+    if (fileInput) {
+      fileInput.value = "";
+    }
+  };
+
+  // ==========================================
+  // CREATE / UPDATE
+  // ==========================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,56 +166,165 @@ export default function FacultyLearningMaterials() {
     setMessage("");
     setError("");
 
-    if (!form.title || !form.course || !form.type) {
+    if (
+      !form.title ||
+      !form.course ||
+      !form.type
+    ) {
       setError(
-        "Title, course ID and material type are required."
+        "Title, course and material type are required."
+      );
+      return;
+    }
+
+    if (
+      !editingId &&
+      form.type === "document" &&
+      !selectedFile
+    ) {
+      setError(
+        "Please select a document to upload."
       );
       return;
     }
 
     try {
-      const response = await apiRequest(
-        "/learning-materials",
-        {
-          method: "POST",
-          body: JSON.stringify(form),
-        }
+      const formData = new FormData();
+
+      formData.append(
+        "title",
+        form.title
       );
+
+      formData.append(
+        "description",
+        form.description
+      );
+
+      formData.append(
+        "course",
+        form.course
+      );
+
+      formData.append(
+        "type",
+        form.type
+      );
+
+      formData.append(
+        "externalUrl",
+        form.externalUrl
+      );
+
+      formData.append(
+        "topic",
+        form.topic
+      );
+
+      formData.append(
+        "isPublished",
+        form.isPublished
+      );
+
+      if (selectedFile) {
+        formData.append(
+          "file",
+          selectedFile
+        );
+      }
+
+      let response;
+
+      if (editingId) {
+        response = await apiRequest(
+          `/learning-materials/${editingId}`,
+          {
+            method: "PUT",
+            body: formData,
+          }
+        );
+      } else {
+        response = await apiRequest(
+          "/learning-materials",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+      }
 
       setMessage(
         response.message ||
-          "Learning material created successfully."
+          "Learning material saved successfully."
       );
 
-      setForm({
-        title: "",
-        description: "",
-        course: "",
-        type: "document",
-        fileUrl: "",
-        externalUrl: "",
-        topic: "",
-        isPublished: true,
-      });
+      resetForm();
 
-      fetchMaterials();
+      await fetchMaterials();
     } catch (err) {
+      console.error(err);
+
       setError(
         err.message ||
-          "Failed to create learning material."
+          "Failed to save learning material."
       );
     }
   };
+
+  // ==========================================
+  // EDIT
+  // ==========================================
+
+  const handleEdit = (material) => {
+    setError("");
+    setMessage("");
+
+    setEditingId(material._id);
+
+    setForm({
+      title: material.title || "",
+      description:
+        material.description || "",
+      course:
+        material.course?._id ||
+        material.course ||
+        "",
+      type:
+        material.type || "document",
+      externalUrl:
+        material.externalUrl || "",
+      topic:
+        material.topic || "",
+      isPublished:
+        material.isPublished !== false,
+    });
+
+    setSelectedFile(null);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  // ==========================================
+  // DELETE
+  // ==========================================
 
   const handleDelete = async (id) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this material?"
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
+
+    setMessage("");
+    setError("");
 
     try {
-      await apiRequest(
+      const response = await apiRequest(
         `/learning-materials/${id}`,
         {
           method: "DELETE",
@@ -123,11 +332,14 @@ export default function FacultyLearningMaterials() {
       );
 
       setMessage(
-        "Learning material deleted successfully."
+        response.message ||
+          "Learning material deleted successfully."
       );
 
-      fetchMaterials();
+      await fetchMaterials();
     } catch (err) {
+      console.error(err);
+
       setError(
         err.message ||
           "Failed to delete learning material."
@@ -138,14 +350,20 @@ export default function FacultyLearningMaterials() {
   return (
     <div className="page">
 
+      {/* HEADER */}
+
       <div className="page-header">
         <div>
           <h1>Learning Materials</h1>
+
           <p>
-            Upload and manage course learning resources.
+            Upload and manage course learning
+            resources.
           </p>
         </div>
       </div>
+
+      {/* MESSAGES */}
 
       {message && (
         <div className="card">
@@ -159,14 +377,22 @@ export default function FacultyLearningMaterials() {
         </div>
       )}
 
-      {/* CREATE MATERIAL */}
+      {/* FORM */}
 
       <div className="card">
+
         <div className="section-heading">
           <div>
             <h2>
-              <Plus size={20} />
-              Add Learning Material
+              {editingId ? (
+                <Pencil size={20} />
+              ) : (
+                <Plus size={20} />
+              )}
+
+              {editingId
+                ? "Edit Learning Material"
+                : "Add Learning Material"}
             </h2>
 
             <p>
@@ -174,11 +400,24 @@ export default function FacultyLearningMaterials() {
               resources for students.
             </p>
           </div>
+
+          {editingId && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={resetForm}
+            >
+              <X size={16} />
+              Cancel
+            </button>
+          )}
         </div>
 
         <form onSubmit={handleSubmit}>
 
           <div className="form-grid">
+
+            {/* TITLE */}
 
             <div className="form-group">
               <label>Title</label>
@@ -192,17 +431,36 @@ export default function FacultyLearningMaterials() {
               />
             </div>
 
-            <div className="form-group">
-              <label>Course ID</label>
+            {/* COURSE */}
 
-              <input
-                type="text"
+            <div className="form-group">
+              <label>Course</label>
+
+              <select
                 name="course"
                 value={form.course}
                 onChange={handleChange}
-                placeholder="Enter course MongoDB ID"
-              />
+                disabled={coursesLoading}
+              >
+                <option value="">
+                  {coursesLoading
+                    ? "Loading courses..."
+                    : "Select a course"}
+                </option>
+
+                {courses.map((course) => (
+                  <option
+                    key={course._id}
+                    value={course._id}
+                  >
+                    {course.courseCode} -{" "}
+                    {course.courseName}
+                  </option>
+                ))}
+              </select>
             </div>
+
+            {/* TYPE */}
 
             <div className="form-group">
               <label>Material Type</label>
@@ -230,6 +488,8 @@ export default function FacultyLearningMaterials() {
               </select>
             </div>
 
+            {/* TOPIC */}
+
             <div className="form-group">
               <label>Topic</label>
 
@@ -241,6 +501,8 @@ export default function FacultyLearningMaterials() {
                 placeholder="Binary Trees"
               />
             </div>
+
+            {/* DESCRIPTION */}
 
             <div className="form-group form-full">
               <label>Description</label>
@@ -254,20 +516,34 @@ export default function FacultyLearningMaterials() {
               />
             </div>
 
+            {/* FILE */}
+
             <div className="form-group">
-              <label>File URL</label>
+              <label>
+                Upload File
+              </label>
 
               <input
-                type="text"
-                name="fileUrl"
-                value={form.fileUrl}
-                onChange={handleChange}
-                placeholder="https://example.com/file.pdf"
+                id="learning-material-file"
+                type="file"
+                onChange={handleFileChange}
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.jpeg,.png"
               />
+
+              {selectedFile && (
+                <small>
+                  Selected:{" "}
+                  {selectedFile.name}
+                </small>
+              )}
             </div>
 
+            {/* EXTERNAL URL */}
+
             <div className="form-group">
-              <label>External URL</label>
+              <label>
+                External URL
+              </label>
 
               <input
                 type="text"
@@ -280,7 +556,10 @@ export default function FacultyLearningMaterials() {
 
           </div>
 
+          {/* PUBLISH */}
+
           <label className="checkbox-row">
+
             <input
               type="checkbox"
               name="isPublished"
@@ -289,22 +568,35 @@ export default function FacultyLearningMaterials() {
             />
 
             Publish immediately
+
           </label>
+
+          {/* SUBMIT */}
 
           <button
             type="submit"
             className="btn btn-primary"
           >
-            <Plus size={17} />
-            Add Material
+            {editingId ? (
+              <>
+                <Pencil size={17} />
+                Update Material
+              </>
+            ) : (
+              <>
+                <Upload size={17} />
+                Upload Material
+              </>
+            )}
           </button>
 
         </form>
       </div>
 
-      {/* EXISTING MATERIALS */}
+      {/* MATERIAL LIST */}
 
       <div className="card">
+
         <div className="section-heading">
           <div>
             <h2>
@@ -319,14 +611,17 @@ export default function FacultyLearningMaterials() {
         </div>
 
         {loading ? (
-          <p>Loading materials...</p>
+          <p>
+            Loading materials...
+          </p>
         ) : materials.length === 0 ? (
           <p>
-            You have not created any learning materials
-            yet.
+            You have not created any learning
+            materials yet.
           </p>
         ) : (
           <div className="table-wrap">
+
             <table className="data-table">
 
               <thead>
@@ -336,16 +631,18 @@ export default function FacultyLearningMaterials() {
                   <th>Type</th>
                   <th>Topic</th>
                   <th>Status</th>
-                  <th>Action</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
 
               <tbody>
+
                 {materials.map((material) => (
                   <tr key={material._id}>
 
                     <td>
                       <div className="table-title">
+
                         <FileText size={17} />
 
                         <div>
@@ -358,14 +655,21 @@ export default function FacultyLearningMaterials() {
                               "No description"}
                           </small>
                         </div>
+
                       </div>
                     </td>
 
                     <td>
-                      {material.course?.courseCode}
+                      <strong>
+                        {material.course?.courseCode ||
+                          "-"}
+                      </strong>
+
                       <br />
+
                       <small>
-                        {material.course?.courseName}
+                        {material.course?.courseName ||
+                          ""}
                       </small>
                     </td>
 
@@ -384,25 +688,52 @@ export default function FacultyLearningMaterials() {
                     </td>
 
                     <td>
-                      <button
-                        type="button"
-                        className="icon-button danger"
-                        onClick={() =>
-                          handleDelete(material._id)
-                        }
-                        title="Delete material"
+
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "8px",
+                        }}
                       >
-                        <Trash2 size={17} />
-                      </button>
+
+                        <button
+                          type="button"
+                          className="icon-button"
+                          onClick={() =>
+                            handleEdit(material)
+                          }
+                          title="Edit material"
+                        >
+                          <Pencil size={17} />
+                        </button>
+
+                        <button
+                          type="button"
+                          className="icon-button danger"
+                          onClick={() =>
+                            handleDelete(
+                              material._id
+                            )
+                          }
+                          title="Delete material"
+                        >
+                          <Trash2 size={17} />
+                        </button>
+
+                      </div>
+
                     </td>
 
                   </tr>
                 ))}
+
               </tbody>
 
             </table>
+
           </div>
         )}
+
       </div>
 
     </div>

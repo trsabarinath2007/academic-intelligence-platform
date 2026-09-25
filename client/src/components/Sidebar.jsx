@@ -43,6 +43,7 @@ const menus = {
     ["Overview", "/faculty-dashboard", "dashboard"],
     ["Students", "/faculty-students", "students"],
     ["Courses", "/faculty-courses", "courses"],
+    ["Learning Materials", "/faculty-learning-materials", "courses"],
     ["Attendance", "/faculty-attendance", "attendance"],
     ["Assignments", "/faculty-assignments", "assignments"],
     ["Submissions", "/faculty-submissions", "submissions"],
