@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { BookOpen, ExternalLink, FileText, Video } from "lucide-react";
-import { api } from "../api";
+import {
+  BookOpen,
+  ExternalLink,
+  FileText,
+  Video,
+} from "lucide-react";
+
+import { apiRequest } from "../api";
 
 export default function LearningMaterials() {
   const [materials, setMaterials] = useState([]);
@@ -10,15 +16,19 @@ export default function LearningMaterials() {
   useEffect(() => {
     const fetchMaterials = async () => {
       try {
-        const response = await api.get(
-          "/learning-materials/published"
+        const response = await apiRequest(
+          "/learning-materials/published",
+          {
+            method: "GET",
+          }
         );
 
-        setMaterials(response.data.materials || []);
+        setMaterials(response.materials || []);
       } catch (err) {
-        console.error(err);
+        console.error("Learning materials error:", err);
+
         setError(
-          err.response?.data?.message ||
+          err.message ||
             "Failed to load learning materials"
         );
       } finally {
@@ -30,8 +40,14 @@ export default function LearningMaterials() {
   }, []);
 
   const getIcon = (type) => {
-    if (type === "video") return <Video size={20} />;
-    if (type === "document") return <FileText size={20} />;
+    if (type === "video") {
+      return <Video size={20} />;
+    }
+
+    if (type === "document") {
+      return <FileText size={20} />;
+    }
+
     return <BookOpen size={20} />;
   };
 
@@ -41,7 +57,9 @@ export default function LearningMaterials() {
         <div className="page-header">
           <div>
             <h1>Learning Materials</h1>
-            <p>Access your course learning resources.</p>
+            <p>
+              Access your course learning resources.
+            </p>
           </div>
         </div>
 
@@ -57,8 +75,10 @@ export default function LearningMaterials() {
       <div className="page-header">
         <div>
           <h1>Learning Materials</h1>
+
           <p>
-            Access notes, videos, links and other course resources.
+            Access notes, videos, links and other
+            course resources.
           </p>
         </div>
       </div>
@@ -72,15 +92,20 @@ export default function LearningMaterials() {
       {!error && materials.length === 0 && (
         <div className="card">
           <h3>No learning materials available</h3>
+
           <p>
-            Faculty have not published any learning materials yet.
+            Faculty have not published any learning
+            materials yet.
           </p>
         </div>
       )}
 
       <div className="card-grid">
         {materials.map((material) => (
-          <div className="card" key={material._id}>
+          <div
+            className="card"
+            key={material._id}
+          >
             <div className="card-icon">
               {getIcon(material.type)}
             </div>
