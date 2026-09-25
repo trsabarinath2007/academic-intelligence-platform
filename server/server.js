@@ -29,6 +29,7 @@ const studentAnalyticsRoutes = require(
   "./routes/studentAnalyticsRoutes"
 );
 const learningMaterialRoutes = require("./routes/learningMaterialRoutes");
+const materialProgressRoutes = require("./routes/materialProgressRoutes");
 const path = require("path");
 dotenv.config();
 
@@ -82,6 +83,10 @@ app.use("/api/learning-materials", learningMaterialRoutes);
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"))
+);
+app.use(
+  "/api/material-progress",
+  materialProgressRoutes
 );
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
