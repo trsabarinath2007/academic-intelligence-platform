@@ -9,10 +9,14 @@ const {
   deleteLearningMaterial,
 } = require("../controllers/learningMaterialController");
 
-const { protect, authorize } = require("../middleware/authMiddleware");
+const {
+  protect,
+  authorize,
+} = require("../middleware/authMiddleware");
+
+const upload = require("../middleware/uploadMiddleware");
 
 const router = express.Router();
-
 
 // Student: Get published learning materials
 router.get(
@@ -22,7 +26,6 @@ router.get(
   getPublishedMaterials
 );
 
-
 // Faculty: Get own learning materials
 router.get(
   "/faculty",
@@ -31,15 +34,14 @@ router.get(
   getFacultyMaterials
 );
 
-
-// Faculty: Create learning material
+// Faculty: Create learning material with optional file
 router.post(
   "/",
   protect,
   authorize("faculty"),
+  upload.single("file"),
   createLearningMaterial
 );
-
 
 // Get material by ID
 router.get(
@@ -48,15 +50,14 @@ router.get(
   getLearningMaterialById
 );
 
-
 // Faculty: Update material
 router.put(
   "/:id",
   protect,
   authorize("faculty"),
+  upload.single("file"),
   updateLearningMaterial
 );
-
 
 // Faculty: Delete material
 router.delete(
@@ -65,6 +66,5 @@ router.delete(
   authorize("faculty"),
   deleteLearningMaterial
 );
-
 
 module.exports = router;

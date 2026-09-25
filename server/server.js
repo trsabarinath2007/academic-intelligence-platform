@@ -29,6 +29,7 @@ const studentAnalyticsRoutes = require(
   "./routes/studentAnalyticsRoutes"
 );
 const learningMaterialRoutes = require("./routes/learningMaterialRoutes");
+const path = require("path");
 dotenv.config();
 
 connectDB();
