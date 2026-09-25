@@ -2,58 +2,36 @@ import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 
-function Layout({
-  children,
+export default function Layout({
   role = "student",
-  title,
-  description,
+  title = "Overview",
+  children,
 }) {
-  const [sidebarOpen, setSidebarOpen] =
-    useState(false);
+  const [open, setOpen] = useState(true);
 
   return (
-    <div className="min-h-screen bg-[#f8f7ff]">
-
-      {/* SIDEBAR */}
-
+    <div
+      className={`app ${
+        open ? "sidebar-visible" : "sidebar-hidden"
+      }`}
+    >
       <Sidebar
         role={role}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
+        open={open}
+        onClose={() => setOpen(false)}
       />
 
-
-      {/* MAIN AREA */}
-
-      <div className="min-h-screen lg:pl-[255px]">
-
-        {/* TOPBAR */}
-
+      <div className="main-shell">
         <Topbar
           title={title}
-          description={description}
-          onMenuClick={() =>
-            setSidebarOpen(true)
-          }
+          sidebarOpen={open}
+          onMenu={() => setOpen(true)}
         />
 
-
-        {/* PAGE CONTENT */}
-
-        <main className="px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
-
-          <div className="mx-auto w-full max-w-[1450px]">
-
-            {children}
-
-          </div>
-
+        <main className="main-content">
+          {children}
         </main>
-
       </div>
-
     </div>
   );
 }
-
-export default Layout;
