@@ -145,7 +145,120 @@ const getStudentMaterialProgress = async (
   }
 };
 
+// ==========================================
+// GET COURSE-WISE MATERIAL PROGRESS
+// ==========================================
+
+const getStudentCourseMaterialProgress = async (
+  req,
+  res
+) => {
+  try {
+    const student = await Student.findOne({
+      user: req.user._id,
+    });
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student profile not found",
+      });
+    }
+
+    const materials =
+      await LearningMaterial.find({
+        isPublished: true,
+      })
+        .populate(
+          "course",
+          "courseCode courseName"
+        )
+        .sort({
+          createdAt: -1,
+        });
+
+    const progress =
+      await MaterialProgress.find({
+        student: student._id,
+        completed: true,
+      }).select("material");
+
+    const completedMaterialIds = new Set(
+      progress.map((item) =>
+        item.material.toString()
+      )
+    );
+
+    const courseMap = new Map();
+
+    materials.forEach((material) => {
+      if (!material.course) {
+        return;
+      }
+
+      const courseId =
+        material.course._id.toString();
+
+      if (!courseMap.has(courseId)) {
+        courseMap.set(courseId, {
+          courseId,
+          courseCode:
+            material.course.courseCode,
+          courseName:
+            material.course.courseName,
+          totalMaterials: 0,
+          completedMaterials: 0,
+        });
+      }
+
+      const course = courseMap.get(courseId);
+
+      course.totalMaterials += 1;
+
+      if (
+        completedMaterialIds.has(
+          material._id.toString()
+        )
+      ) {
+        course.completedMaterials += 1;
+      }
+    });
+
+    const courses = Array.from(
+      courseMap.values()
+    ).map((course) => ({
+      ...course,
+      completionPercentage:
+        course.totalMaterials === 0
+          ? 0
+          : Math.round(
+              (course.completedMaterials /
+                course.totalMaterials) *
+                100
+            ),
+    }));
+
+    res.status(200).json({
+      success: true,
+      courses,
+    });
+  } catch (error) {
+    console.error(
+      "Get course material progress error:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message:
+        "Failed to fetch course material progress",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   markMaterialCompleted,
   getStudentMaterialProgress,
+  getStudentCourseMaterialProgress,
 };
