@@ -28,6 +28,7 @@ const assignmentPerformanceRoutes = require(
 const studentAnalyticsRoutes = require(
   "./routes/studentAnalyticsRoutes"
 );
+const learningMaterialRoutes = require("./routes/learningMaterialRoutes");
 dotenv.config();
 
 connectDB();
@@ -76,6 +77,7 @@ app.use(
   "/api/student-analytics",
   studentAnalyticsRoutes
 );
+app.use("/api/learning-materials", learningMaterialRoutes);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
