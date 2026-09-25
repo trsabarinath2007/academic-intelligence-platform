@@ -27,6 +27,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminStudents from "./pages/AdminStudents";
 import AdminCourses from "./pages/AdminCourses";
 import FacultyLearningMaterials from "./pages/FacultyLearningMaterials";
+import LearningMaterialDetails from "./pages/LearningMaterialDetails";
 
 import NotFound from "./pages/NotFound";
 
@@ -151,6 +152,10 @@ export default function App() {
           path="/404"
           element={<NotFound />}
         />
+<Route
+  path="/learning-materials/:id"
+  element={<LearningMaterialDetails />}
+/>
 
         <Route
           path="*"
