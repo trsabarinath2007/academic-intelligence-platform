@@ -1,8 +1,12 @@
 const LearningMaterial = require("../models/LearningMaterial");
 const Course = require("../models/Course");
+const fs = require("fs");
+const path = require("path");
 
+// ==========================================
+// CREATE LEARNING MATERIAL
+// ==========================================
 
-// Create learning material
 const createLearningMaterial = async (req, res) => {
   try {
     const {
@@ -10,7 +14,6 @@ const createLearningMaterial = async (req, res) => {
       description,
       course,
       type,
-      fileUrl,
       externalUrl,
       topic,
       isPublished,
@@ -32,17 +35,27 @@ const createLearningMaterial = async (req, res) => {
       });
     }
 
+    let uploadedFileUrl = "";
+
+    if (req.file) {
+      uploadedFileUrl =
+        `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    }
+
     const material = await LearningMaterial.create({
       title,
       description,
       course,
       faculty: req.user._id,
       type,
-      fileUrl,
-      externalUrl,
-      topic,
+      fileUrl: uploadedFileUrl,
+      externalUrl: externalUrl || "",
+      topic: topic || "",
       isPublished:
-        isPublished === undefined ? true : isPublished,
+        isPublished === undefined
+          ? true
+          : isPublished === true ||
+            isPublished === "true",
     });
 
     const populatedMaterial =
@@ -56,7 +69,10 @@ const createLearningMaterial = async (req, res) => {
       material: populatedMaterial,
     });
   } catch (error) {
-    console.error("Create learning material error:", error);
+    console.error(
+      "Create learning material error:",
+      error
+    );
 
     res.status(500).json({
       success: false,
@@ -66,8 +82,10 @@ const createLearningMaterial = async (req, res) => {
   }
 };
 
+// ==========================================
+// GET PUBLISHED MATERIALS - STUDENT
+// ==========================================
 
-// Get all published materials for students
 const getPublishedMaterials = async (req, res) => {
   try {
     const materials = await LearningMaterial.find({
@@ -83,7 +101,10 @@ const getPublishedMaterials = async (req, res) => {
       materials,
     });
   } catch (error) {
-    console.error("Get published materials error:", error);
+    console.error(
+      "Get published materials error:",
+      error
+    );
 
     res.status(500).json({
       success: false,
@@ -93,8 +114,10 @@ const getPublishedMaterials = async (req, res) => {
   }
 };
 
+// ==========================================
+// GET FACULTY MATERIALS
+// ==========================================
 
-// Get all materials created by logged-in faculty
 const getFacultyMaterials = async (req, res) => {
   try {
     const materials = await LearningMaterial.find({
@@ -109,23 +132,29 @@ const getFacultyMaterials = async (req, res) => {
       materials,
     });
   } catch (error) {
-    console.error("Get faculty materials error:", error);
+    console.error(
+      "Get faculty materials error:",
+      error
+    );
 
     res.status(500).json({
       success: false,
-      message: "Failed to fetch faculty materials",
+      message: "Failed to fetch learning materials",
       error: error.message,
     });
   }
 };
 
+// ==========================================
+// GET MATERIAL BY ID
+// ==========================================
 
-// Get material by ID
 const getLearningMaterialById = async (req, res) => {
   try {
-    const material = await LearningMaterial.findById(req.params.id)
-      .populate("course", "courseCode courseName")
-      .populate("faculty", "name email");
+    const material =
+      await LearningMaterial.findById(req.params.id)
+        .populate("course", "courseCode courseName")
+        .populate("faculty", "name email");
 
     if (!material) {
       return res.status(404).json({
@@ -134,12 +163,40 @@ const getLearningMaterialById = async (req, res) => {
       });
     }
 
+    // Students can only access published materials
+    if (
+      req.user.role === "student" &&
+      material.isPublished !== true
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "This learning material is not published",
+      });
+    }
+
+    // Faculty can access only their own material
+    if (
+      req.user.role === "faculty" &&
+      material.faculty._id.toString() !==
+        req.user._id.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "You can only access your own materials",
+      });
+    }
+
     res.status(200).json({
       success: true,
       material,
     });
   } catch (error) {
-    console.error("Get learning material error:", error);
+    console.error(
+      "Get learning material error:",
+      error
+    );
 
     res.status(500).json({
       success: false,
@@ -149,13 +206,14 @@ const getLearningMaterialById = async (req, res) => {
   }
 };
 
+// ==========================================
+// UPDATE LEARNING MATERIAL
+// ==========================================
 
-// Update learning material
 const updateLearningMaterial = async (req, res) => {
   try {
-    const material = await LearningMaterial.findById(
-      req.params.id
-    );
+    const material =
+      await LearningMaterial.findById(req.params.id);
 
     if (!material) {
       return res.status(404).json({
@@ -170,8 +228,45 @@ const updateLearningMaterial = async (req, res) => {
     ) {
       return res.status(403).json({
         success: false,
-        message: "You can only update your own materials",
+        message:
+          "You can only update your own materials",
       });
+    }
+
+    if (req.body.course !== undefined) {
+      const existingCourse =
+        await Course.findById(req.body.course);
+
+      if (!existingCourse) {
+        return res.status(404).json({
+          success: false,
+          message: "Course not found",
+        });
+      }
+    }
+
+    // Delete old uploaded file when replacing it
+    if (req.file && material.fileUrl) {
+      try {
+        const oldFileName = path.basename(
+          new URL(material.fileUrl).pathname
+        );
+
+        const oldFilePath = path.join(
+          __dirname,
+          "../uploads",
+          oldFileName
+        );
+
+        if (fs.existsSync(oldFilePath)) {
+          fs.unlinkSync(oldFilePath);
+        }
+      } catch (fileError) {
+        console.log(
+          "Old file cleanup skipped:",
+          fileError.message
+        );
+      }
     }
 
     const allowedFields = [
@@ -179,7 +274,6 @@ const updateLearningMaterial = async (req, res) => {
       "description",
       "course",
       "type",
-      "fileUrl",
       "externalUrl",
       "topic",
       "isPublished",
@@ -187,9 +281,20 @@ const updateLearningMaterial = async (req, res) => {
 
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
-        material[field] = req.body[field];
+        if (field === "isPublished") {
+          material[field] =
+            req.body[field] === true ||
+            req.body[field] === "true";
+        } else {
+          material[field] = req.body[field];
+        }
       }
     });
+
+    if (req.file) {
+      material.fileUrl =
+        `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    }
 
     await material.save();
 
@@ -200,27 +305,33 @@ const updateLearningMaterial = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Learning material updated successfully",
+      message:
+        "Learning material updated successfully",
       material: updatedMaterial,
     });
   } catch (error) {
-    console.error("Update learning material error:", error);
+    console.error(
+      "Update learning material error:",
+      error
+    );
 
     res.status(500).json({
       success: false,
-      message: "Failed to update learning material",
+      message:
+        "Failed to update learning material",
       error: error.message,
     });
   }
 };
 
+// ==========================================
+// DELETE LEARNING MATERIAL
+// ==========================================
 
-// Delete learning material
 const deleteLearningMaterial = async (req, res) => {
   try {
-    const material = await LearningMaterial.findById(
-      req.params.id
-    );
+    const material =
+      await LearningMaterial.findById(req.params.id);
 
     if (!material) {
       return res.status(404).json({
@@ -235,27 +346,55 @@ const deleteLearningMaterial = async (req, res) => {
     ) {
       return res.status(403).json({
         success: false,
-        message: "You can only delete your own materials",
+        message:
+          "You can only delete your own materials",
       });
+    }
+
+    if (material.fileUrl) {
+      try {
+        const fileName = path.basename(
+          new URL(material.fileUrl).pathname
+        );
+
+        const filePath = path.join(
+          __dirname,
+          "../uploads",
+          fileName
+        );
+
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (fileError) {
+        console.log(
+          "File cleanup skipped:",
+          fileError.message
+        );
+      }
     }
 
     await material.deleteOne();
 
     res.status(200).json({
       success: true,
-      message: "Learning material deleted successfully",
+      message:
+        "Learning material deleted successfully",
     });
   } catch (error) {
-    console.error("Delete learning material error:", error);
+    console.error(
+      "Delete learning material error:",
+      error
+    );
 
     res.status(500).json({
       success: false,
-      message: "Failed to delete learning material",
+      message:
+        "Failed to delete learning material",
       error: error.message,
     });
   }
 };
-
 
 module.exports = {
   createLearningMaterial,
