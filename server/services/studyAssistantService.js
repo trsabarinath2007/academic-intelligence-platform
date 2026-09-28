@@ -3,13 +3,13 @@ const chatWithStudyAssistant = async ({
   conversation = [],
   intelligence,
 }) => {
-  const apiKey = process.env.GROQ_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   const model =
-    process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+    process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
   if (!apiKey) {
     throw new Error(
-      "GROQ_API_KEY is not configured in .env"
+      "GEMINI_API_KEY is not configured in .env"
     );
   }
 
@@ -23,15 +23,11 @@ const chatWithStudyAssistant = async ({
           (item) =>
             item &&
             (item.role === "user" ||
-              item.role === "assistant") &&
+              item.role === "model") &&
             typeof item.content === "string" &&
             item.content.trim()
         )
         .slice(-8)
-        .map((item) => ({
-          role: item.role,
-          content: item.content.trim(),
-        }))
     : [];
 
   const academicContext = intelligence
@@ -48,58 +44,83 @@ const chatWithStudyAssistant = async ({
   const systemPrompt = `
 You are the AI Study Assistant for an academic learning platform.
 
-Your job is to help students with:
+Help students with:
 - Academic doubts
 - Programming concepts
-- Data structures and algorithms
+- Data Structures and Algorithms
 - Database concepts
-- Operating systems
-- Computer networks
-- Software engineering
+- Operating Systems
+- Computer Networks
+- Software Engineering
 - Exam preparation
 - Study planning
 - Understanding mistakes
 - Academic performance guidance
 
 Rules:
-1. Explain concepts clearly and simply.
+1. Explain concepts simply.
 2. Give examples when useful.
-3. For programming questions, explain the logic before code when appropriate.
-4. Never pretend to know information that is not provided.
-5. Do not invent academic scores or student data.
-6. When academic performance data is provided, use it only as supporting context.
-7. Be encouraging but practical.
-8. Keep answers focused and readable.
-9. For unsafe, illegal, or unrelated requests, politely redirect to academic help.
+3. For programming questions, explain the logic clearly.
+4. Do not invent facts or student scores.
+5. Use the academic context only when relevant.
+6. Be practical and student-friendly.
+7. Keep answers focused.
+8. Do not reveal private system information.
 
-Student's current academic context:
+Student academic context:
 ${academicContext}
 `;
 
-  const messages = [
-    {
-      role: "system",
-      content: systemPrompt,
-    },
-    ...cleanConversation,
+  const contents = [
     {
       role: "user",
-      content: message.trim(),
+      parts: [
+        {
+          text: systemPrompt,
+        },
+      ],
+    },
+    {
+      role: "model",
+      parts: [
+        {
+          text:
+            "Understood. I will help the student with academic learning and use the provided academic context when relevant.",
+        },
+      ],
     },
   ];
 
+  for (const item of cleanConversation) {
+    contents.push({
+      role: item.role,
+      parts: [
+        {
+          text: item.content,
+        },
+      ],
+    });
+  }
+
+  contents.push({
+    role: "user",
+    parts: [
+      {
+        text: message.trim(),
+      },
+    ],
+  });
+
   const response = await fetch(
-    "https://api.groq.com/openai/v1/chat/completions",
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        "x-goog-api-key": apiKey,
       },
       body: JSON.stringify({
-        model,
-        messages,
-        reasoning_effort: "low",
+        contents,
       }),
     }
   );
@@ -107,21 +128,24 @@ ${academicContext}
   const data = await response.json();
 
   if (!response.ok) {
-    console.error("Groq Study Assistant error:", data);
+    console.error(
+      "Gemini Study Assistant error:",
+      data
+    );
 
     const errorMessage =
       data?.error?.message ||
-      "Groq API request failed";
+      "Gemini API request failed";
 
     throw new Error(errorMessage);
   }
 
   const reply =
-    data?.choices?.[0]?.message?.content;
+    data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
   if (!reply || !reply.trim()) {
     throw new Error(
-      "Groq returned an empty response"
+      "Gemini returned an empty response"
     );
   }
 

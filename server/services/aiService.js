@@ -4,13 +4,13 @@ const generateQuizWithAI = async ({
   difficulty,
   numberOfQuestions,
 }) => {
-  const apiKey = process.env.GROQ_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   const model =
-    process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+    process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
   if (!apiKey) {
     throw new Error(
-      "GROQ_API_KEY is not configured in .env"
+      "GEMINI_API_KEY is not configured in .env"
     );
   }
 
@@ -51,83 +51,73 @@ Requirements:
   2 = third option
   3 = fourth option
 - Include a short explanation.
-- Return only the structured JSON requested by the schema.
+- Include difficulty and topic.
 `;
 
   const response = await fetch(
-    "https://api.groq.com/openai/v1/chat/completions",
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        "x-goog-api-key": apiKey,
       },
       body: JSON.stringify({
-        model,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an expert educational quiz generator.",
-          },
+        contents: [
           {
             role: "user",
-            content: prompt,
+            parts: [
+              {
+                text: prompt,
+              },
+            ],
           },
         ],
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "quiz_generation",
-            schema: {
-              type: "object",
-              properties: {
-                questions: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      question: {
-                        type: "string",
-                      },
-                      options: {
-                        type: "array",
-                        items: {
-                          type: "string",
-                        },
-                        minItems: 4,
-                        maxItems: 4,
-                      },
-                      correctAnswer: {
-                        type: "integer",
-                        minimum: 0,
-                        maximum: 3,
-                      },
-                      explanation: {
-                        type: "string",
-                      },
-                      difficulty: {
-                        type: "string",
-                      },
-                      topic: {
-                        type: "string",
+
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              questions: {
+                type: "ARRAY",
+                items: {
+                  type: "OBJECT",
+                  properties: {
+                    question: {
+                      type: "STRING",
+                    },
+                    options: {
+                      type: "ARRAY",
+                      items: {
+                        type: "STRING",
                       },
                     },
-                    required: [
-                      "question",
-                      "options",
-                      "correctAnswer",
-                      "explanation",
-                      "difficulty",
-                      "topic",
-                    ],
-                    additionalProperties: false,
+                    correctAnswer: {
+                      type: "INTEGER",
+                    },
+                    explanation: {
+                      type: "STRING",
+                    },
+                    difficulty: {
+                      type: "STRING",
+                    },
+                    topic: {
+                      type: "STRING",
+                    },
                   },
+                  required: [
+                    "question",
+                    "options",
+                    "correctAnswer",
+                    "explanation",
+                    "difficulty",
+                    "topic",
+                  ],
                 },
               },
-              required: ["questions"],
-              additionalProperties: false,
             },
+            required: ["questions"],
           },
         },
       }),
@@ -137,21 +127,21 @@ Requirements:
   const data = await response.json();
 
   if (!response.ok) {
-    console.error("Groq API error:", data);
+    console.error("Gemini API error:", data);
 
     const message =
       data?.error?.message ||
-      "Groq API request failed";
+      "Gemini API request failed";
 
     throw new Error(message);
   }
 
   const content =
-    data?.choices?.[0]?.message?.content;
+    data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
   if (!content) {
     throw new Error(
-      "Groq returned an empty response"
+      "Gemini returned an empty response"
     );
   }
 
@@ -161,12 +151,12 @@ Requirements:
     parsed = JSON.parse(content);
   } catch (error) {
     console.error(
-      "Failed to parse Groq JSON:",
+      "Failed to parse Gemini JSON:",
       content
     );
 
     throw new Error(
-      "Groq returned invalid JSON"
+      "Gemini returned invalid JSON"
     );
   }
 
@@ -175,7 +165,7 @@ Requirements:
     !Array.isArray(parsed.questions)
   ) {
     throw new Error(
-      "Invalid quiz structure returned by Groq"
+      "Invalid quiz structure returned by Gemini"
     );
   }
 
@@ -195,7 +185,7 @@ Requirements:
       question.correctAnswer > 3
     ) {
       throw new Error(
-        "Groq returned an invalid question format"
+        "Gemini returned an invalid question format"
       );
     }
   }

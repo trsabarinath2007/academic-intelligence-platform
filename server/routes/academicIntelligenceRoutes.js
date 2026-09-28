@@ -3,6 +3,7 @@ const express = require("express");
 const {
   getMyAcademicIntelligence,
   getMyAIAnalysis,
+  studyAssistantChat,
 } = require("../controllers/academicIntelligenceController");
 
 const {
@@ -24,6 +25,13 @@ router.get(
   protect,
   authorize("student"),
   getMyAIAnalysis
+);
+
+router.post(
+  "/student/study-assistant",
+  protect,
+  authorize("student"),
+  studyAssistantChat
 );
 
 module.exports = router;
