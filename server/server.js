@@ -29,6 +29,7 @@ const studentAnalyticsRoutes = require("./routes/studentAnalyticsRoutes");
 const learningMaterialRoutes = require("./routes/learningMaterialRoutes");
 const materialProgressRoutes = require("./routes/materialProgressRoutes");
 const aiQuizRoutes = require("./routes/aiQuizRoutes");
+const academicIntelligenceRoutes = require("./routes/academicIntelligenceRoutes");
 
 dotenv.config();
 
@@ -164,12 +165,14 @@ app.use(
   materialProgressRoutes
 );
 
-/*
- * AI Quiz Generator
- */
 app.use(
   "/api/ai-quizzes",
   aiQuizRoutes
+);
+
+app.use(
+  "/api/academic-intelligence",
+  academicIntelligenceRoutes
 );
 
 app.listen(PORT, () => {
