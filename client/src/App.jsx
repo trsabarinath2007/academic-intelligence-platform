@@ -34,6 +34,8 @@ import FacultyLearningMaterials from "./pages/FacultyLearningMaterials";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminStudents from "./pages/AdminStudents";
 import AdminCourses from "./pages/AdminCourses";
+import FacultyQuizzes from "./pages/FacultyQuizzes";
+import StudentQuizzes from "./pages/StudentQuizzes";
 
 import NotFound from "./pages/NotFound";
 
@@ -173,6 +175,14 @@ export default function App() {
           path="/admin-courses"
           element={<AdminCourses />}
         />
+        <Route
+  path="/faculty-quizzes"
+  element={<FacultyQuizzes />}
+/>
+<Route
+  path="/student-quizzes"
+  element={<StudentQuizzes />}
+/>
 
         {/* ================= 404 ================= */}
 
