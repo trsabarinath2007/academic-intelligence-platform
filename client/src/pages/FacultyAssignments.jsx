@@ -6,6 +6,8 @@ import {
   Calendar,
   BookOpen,
   Eye,
+  Edit,
+  Trash2,
   Loader2,
 } from "lucide-react";
 
@@ -23,6 +25,7 @@ export default function FacultyAssignments() {
   const [success, setSuccess] = useState("");
 
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   const [selectedAssignment, setSelectedAssignment] =
     useState(null);
@@ -132,17 +135,47 @@ export default function FacultyAssignments() {
       dueDate: "",
       totalMarks: "",
     });
+
+    setEditingId(null);
   };
 
   // ==========================================
-  // OPEN FORM
+  // OPEN CREATE FORM
   // ==========================================
 
   const openCreateForm = () => {
     setError("");
     setSuccess("");
-    setSelectedAssignment(null);
     resetForm();
+    setShowForm(true);
+  };
+
+  // ==========================================
+  // OPEN EDIT FORM
+  // ==========================================
+
+  const openEditForm = (assignment) => {
+    setError("");
+    setSuccess("");
+
+    const dueDate = assignment.dueDate
+      ? new Date(assignment.dueDate)
+          .toISOString()
+          .split("T")[0]
+      : "";
+
+    setFormData({
+      title: assignment.title || "",
+      description:
+        assignment.description || "",
+      courseId:
+        assignment.course?._id || "",
+      dueDate,
+      totalMarks:
+        assignment.totalMarks || "",
+    });
+
+    setEditingId(assignment._id);
     setShowForm(true);
   };
 
@@ -160,7 +193,7 @@ export default function FacultyAssignments() {
   };
 
   // ==========================================
-  // CREATE ASSIGNMENT
+  // SUBMIT CREATE / UPDATE
   // ==========================================
 
   const handleSubmit = async (event) => {
@@ -170,12 +203,16 @@ export default function FacultyAssignments() {
     setSuccess("");
 
     if (!formData.title.trim()) {
-      setError("Assignment title is required");
+      setError(
+        "Assignment title is required"
+      );
       return;
     }
 
     if (!formData.description.trim()) {
-      setError("Assignment description is required");
+      setError(
+        "Assignment description is required"
+      );
       return;
     }
 
@@ -202,26 +239,42 @@ export default function FacultyAssignments() {
     try {
       setSubmitting(true);
 
-      const response = await apiRequest(
-        "/assignments",
-        {
-          method: "POST",
-          body: {
-            title: formData.title.trim(),
-            description:
-              formData.description.trim(),
-            courseId: formData.courseId,
-            dueDate: formData.dueDate,
-            totalMarks: Number(
-              formData.totalMarks
-            ),
-          },
-        }
-      );
+      const payload = {
+        title: formData.title.trim(),
+        description:
+          formData.description.trim(),
+        courseId: formData.courseId,
+        dueDate: formData.dueDate,
+        totalMarks: Number(
+          formData.totalMarks
+        ),
+      };
+
+      let response;
+
+      if (editingId) {
+        response = await apiRequest(
+          `/assignments/${editingId}`,
+          {
+            method: "PUT",
+            body: payload,
+          }
+        );
+      } else {
+        response = await apiRequest(
+          "/assignments",
+          {
+            method: "POST",
+            body: payload,
+          }
+        );
+      }
 
       setSuccess(
         response.message ||
-          "Assignment created successfully"
+          (editingId
+            ? "Assignment updated successfully"
+            : "Assignment created successfully")
       );
 
       setShowForm(false);
@@ -230,16 +283,58 @@ export default function FacultyAssignments() {
       await fetchAssignments();
     } catch (error) {
       console.error(
-        "Create assignment error:",
+        "Save assignment error:",
         error
       );
 
       setError(
         error.message ||
-          "Failed to create assignment"
+          "Failed to save assignment"
       );
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // ==========================================
+  // DELETE ASSIGNMENT
+  // ==========================================
+
+  const handleDelete = async (assignment) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${assignment.title}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setError("");
+      setSuccess("");
+
+      await apiRequest(
+        `/assignments/${assignment._id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      setSuccess(
+        "Assignment deleted successfully"
+      );
+
+      await fetchAssignments();
+    } catch (error) {
+      console.error(
+        "Delete assignment error:",
+        error
+      );
+
+      setError(
+        error.message ||
+          "Failed to delete assignment"
+      );
     }
   };
 
@@ -486,7 +581,7 @@ export default function FacultyAssignments() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px]">
+            <table className="w-full min-w-[1000px]">
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">
@@ -506,7 +601,7 @@ export default function FacultyAssignments() {
                   </th>
 
                   <th className="px-6 py-4 text-right text-sm font-semibold text-slate-600">
-                    Action
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -577,19 +672,53 @@ export default function FacultyAssignments() {
                         {assignment.totalMarks}
                       </td>
 
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleViewAssignment(
-                              assignment._id
-                            )
-                          }
-                          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-                        >
-                          <Eye size={17} />
-                          View
-                        </button>
+                      <td className="px-6 py-4">
+                        <div className="flex justify-end gap-2">
+                          {/* VIEW */}
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleViewAssignment(
+                                assignment._id
+                              )
+                            }
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                          >
+                            <Eye size={16} />
+                            View
+                          </button>
+
+                          {/* EDIT */}
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openEditForm(
+                                assignment
+                              )
+                            }
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100"
+                          >
+                            <Edit size={16} />
+                            Edit
+                          </button>
+
+                          {/* DELETE */}
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleDelete(
+                                assignment
+                              )
+                            }
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
+                          >
+                            <Trash2 size={16} />
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -601,7 +730,7 @@ export default function FacultyAssignments() {
       </div>
 
       {/* ======================================
-          CREATE ASSIGNMENT MODAL
+          CREATE / EDIT MODAL
       ====================================== */}
 
       {showForm && (
@@ -610,11 +739,15 @@ export default function FacultyAssignments() {
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
               <div>
                 <h2 className="text-xl font-bold text-slate-800">
-                  Create Assignment
+                  {editingId
+                    ? "Edit Assignment"
+                    : "Create Assignment"}
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Add a new academic assignment.
+                  {editingId
+                    ? "Update assignment information."
+                    : "Add a new academic assignment."}
                 </p>
               </div>
 
@@ -697,7 +830,7 @@ export default function FacultyAssignments() {
                 />
               </div>
 
-              {/* DUE DATE + MARKS */}
+              {/* DATE + MARKS */}
 
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div>
@@ -756,7 +889,11 @@ export default function FacultyAssignments() {
                   )}
 
                   {submitting
-                    ? "Creating..."
+                    ? editingId
+                      ? "Updating..."
+                      : "Creating..."
+                    : editingId
+                    ? "Update Assignment"
                     : "Create Assignment"}
                 </button>
               </div>
