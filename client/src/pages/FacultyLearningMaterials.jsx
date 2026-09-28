@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
 import {
-  FileText,
-  Plus,
-  Trash2,
   BookOpen,
-  Pencil,
-  X,
+  Edit,
+  Trash2,
+  Plus,
   Upload,
+  X,
 } from "lucide-react";
 
 import { apiRequest } from "../api";
@@ -16,11 +15,12 @@ export default function FacultyLearningMaterials() {
   const [courses, setCourses] = useState([]);
 
   const [loading, setLoading] = useState(true);
-  const [coursesLoading, setCoursesLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
+  const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
   const [form, setForm] = useState({
@@ -28,44 +28,16 @@ export default function FacultyLearningMaterials() {
     description: "",
     course: "",
     type: "document",
-    externalUrl: "",
     topic: "",
+    externalUrl: "",
     isPublished: true,
+    file: null,
   });
-
-  const [selectedFile, setSelectedFile] = useState(null);
-
-  // ==========================================
-  // FETCH COURSES
-  // ==========================================
-
-  const fetchCourses = async () => {
-    try {
-      setCoursesLoading(true);
-
-      const response = await apiRequest("/courses", {
-        method: "GET",
-      });
-
-      setCourses(response.courses || []);
-    } catch (err) {
-      console.error(err);
-
-      setError(
-        err.message || "Failed to load courses"
-      );
-    } finally {
-      setCoursesLoading(false);
-    }
-  };
-
-  // ==========================================
-  // FETCH MATERIALS
-  // ==========================================
 
   const fetchMaterials = async () => {
     try {
       setLoading(true);
+      setError("");
 
       const response = await apiRequest(
         "/learning-materials/faculty",
@@ -80,57 +52,35 @@ export default function FacultyLearningMaterials() {
 
       setError(
         err.message ||
-          "Failed to load learning materials"
+          "Failed to load learning materials."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchCourses();
-    fetchMaterials();
-  }, []);
+  const fetchCourses = async () => {
+    try {
+      const response = await apiRequest(
+        "/courses",
+        {
+          method: "GET",
+        }
+      );
 
-  // ==========================================
-  // INPUT CHANGE
-  // ==========================================
-
-  const handleChange = (e) => {
-    const {
-      name,
-      value,
-      type,
-      checked,
-    } = e.target;
-
-    setForm((prev) => ({
-      ...prev,
-      [name]:
-        type === "checkbox"
-          ? checked
-          : value,
-    }));
-  };
-
-  // ==========================================
-  // FILE CHANGE
-  // ==========================================
-
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-
-    if (!file) {
-      setSelectedFile(null);
-      return;
+      setCourses(response.courses || []);
+    } catch (err) {
+      console.error(
+        "Course loading error:",
+        err
+      );
     }
-
-    setSelectedFile(file);
   };
 
-  // ==========================================
-  // RESET FORM
-  // ==========================================
+  useEffect(() => {
+    fetchMaterials();
+    fetchCourses();
+  }, []);
 
   const resetForm = () => {
     setForm({
@@ -138,67 +88,59 @@ export default function FacultyLearningMaterials() {
       description: "",
       course: "",
       type: "document",
-      externalUrl: "",
       topic: "",
+      externalUrl: "",
       isPublished: true,
+      file: null,
     });
 
-    setSelectedFile(null);
     setEditingId(null);
-
-    const fileInput =
-      document.getElementById(
-        "learning-material-file"
-      );
-
-    if (fileInput) {
-      fileInput.value = "";
-    }
+    setShowForm(false);
   };
 
-  // ==========================================
-  // CREATE / UPDATE
-  // ==========================================
+  const handleChange = (e) => {
+    const { name, value, type, checked, files } =
+      e.target;
+
+    setForm((previous) => ({
+      ...previous,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : type === "file"
+          ? files?.[0] || null
+          : value,
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setMessage("");
-    setError("");
-
-    if (
-      !form.title ||
-      !form.course ||
-      !form.type
-    ) {
-      setError(
-        "Title, course and material type are required."
-      );
-      return;
-    }
-
-    if (
-      !editingId &&
-      form.type === "document" &&
-      !selectedFile
-    ) {
-      setError(
-        "Please select a document to upload."
-      );
-      return;
-    }
-
     try {
+      setSaving(true);
+      setError("");
+      setMessage("");
+
+      if (!form.title.trim()) {
+        setError("Title is required.");
+        return;
+      }
+
+      if (!form.course) {
+        setError("Please select a course.");
+        return;
+      }
+
       const formData = new FormData();
 
       formData.append(
         "title",
-        form.title
+        form.title.trim()
       );
 
       formData.append(
         "description",
-        form.description
+        form.description.trim()
       );
 
       formData.append(
@@ -212,46 +154,40 @@ export default function FacultyLearningMaterials() {
       );
 
       formData.append(
-        "externalUrl",
-        form.externalUrl
+        "topic",
+        form.topic.trim()
       );
 
       formData.append(
-        "topic",
-        form.topic
+        "externalUrl",
+        form.externalUrl.trim()
       );
 
       formData.append(
         "isPublished",
-        form.isPublished
+        String(form.isPublished)
       );
 
-      if (selectedFile) {
+      if (form.file) {
         formData.append(
           "file",
-          selectedFile
+          form.file
         );
       }
 
-      let response;
+      const endpoint = editingId
+        ? `/learning-materials/${editingId}`
+        : "/learning-materials";
 
-      if (editingId) {
-        response = await apiRequest(
-          `/learning-materials/${editingId}`,
-          {
-            method: "PUT",
-            body: formData,
-          }
-        );
-      } else {
-        response = await apiRequest(
-          "/learning-materials",
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-      }
+      const response = await apiRequest(
+        endpoint,
+        {
+          method: editingId
+            ? "PUT"
+            : "POST",
+          body: formData,
+        }
+      );
 
       setMessage(
         response.message ||
@@ -259,7 +195,6 @@ export default function FacultyLearningMaterials() {
       );
 
       resetForm();
-
       await fetchMaterials();
     } catch (err) {
       console.error(err);
@@ -268,17 +203,12 @@ export default function FacultyLearningMaterials() {
         err.message ||
           "Failed to save learning material."
       );
+    } finally {
+      setSaving(false);
     }
   };
 
-  // ==========================================
-  // EDIT
-  // ==========================================
-
   const handleEdit = (material) => {
-    setError("");
-    setMessage("");
-
     setEditingId(material._id);
 
     setForm({
@@ -286,46 +216,37 @@ export default function FacultyLearningMaterials() {
       description:
         material.description || "",
       course:
-        material.course?._id ||
-        material.course ||
-        "",
+        material.course?._id || "",
       type:
         material.type || "document",
+      topic: material.topic || "",
       externalUrl:
         material.externalUrl || "",
-      topic:
-        material.topic || "",
       isPublished:
-        material.isPublished !== false,
+        material.isPublished === true,
+      file: null,
     });
 
-    setSelectedFile(null);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    setShowForm(true);
+    setMessage("");
+    setError("");
   };
 
-  // ==========================================
-  // DELETE
-  // ==========================================
-
-  const handleDelete = async (id) => {
+  const handleDelete = async (materialId) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this material?"
+      "Are you sure you want to delete this learning material?"
     );
 
     if (!confirmed) {
       return;
     }
 
-    setMessage("");
-    setError("");
-
     try {
+      setError("");
+      setMessage("");
+
       const response = await apiRequest(
-        `/learning-materials/${id}`,
+        `/learning-materials/${materialId}`,
         {
           method: "DELETE",
         }
@@ -347,23 +268,61 @@ export default function FacultyLearningMaterials() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="page">
+        <div className="page-header">
+          <div>
+            <h1>Learning Materials</h1>
+            <p>
+              Manage your course learning
+              resources.
+            </p>
+          </div>
+        </div>
+
+        <div className="card">
+          Loading learning materials...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page">
-
-      {/* HEADER */}
-
       <div className="page-header">
         <div>
           <h1>Learning Materials</h1>
-
           <p>
-            Upload and manage course learning
-            resources.
+            Create, update and manage your
+            learning resources.
           </p>
         </div>
-      </div>
 
-      {/* MESSAGES */}
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => {
+            setEditingId(null);
+            setForm({
+              title: "",
+              description: "",
+              course: "",
+              type: "document",
+              topic: "",
+              externalUrl: "",
+              isPublished: true,
+              file: null,
+            });
+            setShowForm(true);
+            setMessage("");
+            setError("");
+          }}
+        >
+          <Plus size={17} />
+          Add Material
+        </button>
+      </div>
 
       {message && (
         <div className="card">
@@ -377,226 +336,197 @@ export default function FacultyLearningMaterials() {
         </div>
       )}
 
-      {/* FORM */}
+      {showForm && (
+        <div className="card">
+          <div className="section-heading">
+            <div>
+              <h2>
+                {editingId
+                  ? "Edit Learning Material"
+                  : "Add Learning Material"}
+              </h2>
 
-      <div className="card">
+              <p>
+                Add a document, video, link or
+                other learning resource.
+              </p>
+            </div>
 
-        <div className="section-heading">
-          <div>
-            <h2>
-              {editingId ? (
-                <Pencil size={20} />
-              ) : (
-                <Plus size={20} />
-              )}
-
-              {editingId
-                ? "Edit Learning Material"
-                : "Add Learning Material"}
-            </h2>
-
-            <p>
-              Add notes, videos, links or other
-              resources for students.
-            </p>
-          </div>
-
-          {editingId && (
             <button
               type="button"
               className="btn btn-secondary"
               onClick={resetForm}
             >
               <X size={16} />
-              Cancel
+              Close
             </button>
-          )}
-        </div>
-
-        <form onSubmit={handleSubmit}>
-
-          <div className="form-grid">
-
-            {/* TITLE */}
-
-            <div className="form-group">
-              <label>Title</label>
-
-              <input
-                type="text"
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                placeholder="Introduction to Binary Trees"
-              />
-            </div>
-
-            {/* COURSE */}
-
-            <div className="form-group">
-              <label>Course</label>
-
-              <select
-                name="course"
-                value={form.course}
-                onChange={handleChange}
-                disabled={coursesLoading}
-              >
-                <option value="">
-                  {coursesLoading
-                    ? "Loading courses..."
-                    : "Select a course"}
-                </option>
-
-                {courses.map((course) => (
-                  <option
-                    key={course._id}
-                    value={course._id}
-                  >
-                    {course.courseCode} -{" "}
-                    {course.courseName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* TYPE */}
-
-            <div className="form-group">
-              <label>Material Type</label>
-
-              <select
-                name="type"
-                value={form.type}
-                onChange={handleChange}
-              >
-                <option value="document">
-                  Document
-                </option>
-
-                <option value="video">
-                  Video
-                </option>
-
-                <option value="link">
-                  External Link
-                </option>
-
-                <option value="other">
-                  Other
-                </option>
-              </select>
-            </div>
-
-            {/* TOPIC */}
-
-            <div className="form-group">
-              <label>Topic</label>
-
-              <input
-                type="text"
-                name="topic"
-                value={form.topic}
-                onChange={handleChange}
-                placeholder="Binary Trees"
-              />
-            </div>
-
-            {/* DESCRIPTION */}
-
-            <div className="form-group form-full">
-              <label>Description</label>
-
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                placeholder="Describe the learning material..."
-                rows="4"
-              />
-            </div>
-
-            {/* FILE */}
-
-            <div className="form-group">
-              <label>
-                Upload File
-              </label>
-
-              <input
-                id="learning-material-file"
-                type="file"
-                onChange={handleFileChange}
-                accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.jpeg,.png"
-              />
-
-              {selectedFile && (
-                <small>
-                  Selected:{" "}
-                  {selectedFile.name}
-                </small>
-              )}
-            </div>
-
-            {/* EXTERNAL URL */}
-
-            <div className="form-group">
-              <label>
-                External URL
-              </label>
-
-              <input
-                type="text"
-                name="externalUrl"
-                value={form.externalUrl}
-                onChange={handleChange}
-                placeholder="https://youtube.com/..."
-              />
-            </div>
-
           </div>
 
-          {/* PUBLISH */}
+          <form onSubmit={handleSubmit}>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Title *</label>
 
-          <label className="checkbox-row">
+                <input
+                  type="text"
+                  name="title"
+                  value={form.title}
+                  onChange={handleChange}
+                  placeholder="Enter material title"
+                />
+              </div>
 
-            <input
-              type="checkbox"
-              name="isPublished"
-              checked={form.isPublished}
-              onChange={handleChange}
-            />
+              <div className="form-group">
+                <label>Course *</label>
 
-            Publish immediately
+                <select
+                  name="course"
+                  value={form.course}
+                  onChange={handleChange}
+                >
+                  <option value="">
+                    Select Course
+                  </option>
 
-          </label>
+                  {courses.map((course) => (
+                    <option
+                      key={course._id}
+                      value={course._id}
+                    >
+                      {course.courseCode} -{" "}
+                      {course.courseName}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          {/* SUBMIT */}
+              <div className="form-group">
+                <label>Type *</label>
 
-          <button
-            type="submit"
-            className="btn btn-primary"
-          >
-            {editingId ? (
-              <>
-                <Pencil size={17} />
-                Update Material
-              </>
-            ) : (
-              <>
-                <Upload size={17} />
-                Upload Material
-              </>
-            )}
-          </button>
+                <select
+                  name="type"
+                  value={form.type}
+                  onChange={handleChange}
+                >
+                  <option value="document">
+                    Document
+                  </option>
 
-        </form>
-      </div>
+                  <option value="video">
+                    Video
+                  </option>
 
-      {/* MATERIAL LIST */}
+                  <option value="link">
+                    Link
+                  </option>
+
+                  <option value="other">
+                    Other
+                  </option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Topic</label>
+
+                <input
+                  type="text"
+                  name="topic"
+                  value={form.topic}
+                  onChange={handleChange}
+                  placeholder="Example: Binary Trees"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>External URL</label>
+
+                <input
+                  type="url"
+                  name="externalUrl"
+                  value={form.externalUrl}
+                  onChange={handleChange}
+                  placeholder="https://example.com"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Upload File</label>
+
+                <input
+                  type="file"
+                  name="file"
+                  onChange={handleChange}
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.jpeg,.png"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Description</label>
+
+                <textarea
+                  name="description"
+                  value={form.description}
+                  onChange={handleChange}
+                  placeholder="Enter material description"
+                  rows="4"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    name="isPublished"
+                    checked={form.isPublished}
+                    onChange={handleChange}
+                    style={{
+                      width: "auto",
+                      marginRight: "8px",
+                    }}
+                  />
+
+                  Publish immediately
+                </label>
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                marginTop: "20px",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={saving}
+              >
+                <Upload size={16} />
+
+                {saving
+                  ? "Saving..."
+                  : editingId
+                  ? "Update Material"
+                  : "Create Material"}
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={resetForm}
+                disabled={saving}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <div className="card">
-
         <div className="section-heading">
           <div>
             <h2>
@@ -605,137 +535,123 @@ export default function FacultyLearningMaterials() {
             </h2>
 
             <p>
-              Materials created by you.
+              {materials.length} material(s)
+              created by you.
             </p>
           </div>
         </div>
 
-        {loading ? (
-          <p>
-            Loading materials...
-          </p>
-        ) : materials.length === 0 ? (
-          <p>
-            You have not created any learning
-            materials yet.
-          </p>
+        {materials.length === 0 ? (
+          <div>
+            <h3>
+              No learning materials yet
+            </h3>
+
+            <p>
+              Click "Add Material" to create
+              your first learning resource.
+            </p>
+          </div>
         ) : (
-          <div className="table-wrap">
+          <div className="card-grid">
+            {materials.map((material) => (
+              <div
+                className="card"
+                key={material._id}
+              >
+                <div className="card-icon">
+                  <BookOpen size={20} />
+                </div>
 
-            <table className="data-table">
+                <h3>
+                  {material.title}
+                </h3>
 
-              <thead>
-                <tr>
-                  <th>Material</th>
-                  <th>Course</th>
-                  <th>Type</th>
-                  <th>Topic</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
+                <p>
+                  {material.description ||
+                    "No description available."}
+                </p>
 
-              <tbody>
+                <div className="muted">
+                  <strong>
+                    {material.course?.courseCode}
+                  </strong>{" "}
+                  —{" "}
+                  {material.course?.courseName}
+                </div>
 
-                {materials.map((material) => (
-                  <tr key={material._id}>
+                {material.topic && (
+                  <div className="muted">
+                    Topic:{" "}
+                    {material.topic}
+                  </div>
+                )}
 
-                    <td>
-                      <div className="table-title">
+                <div className="muted">
+                  Type: {material.type}
+                </div>
 
-                        <FileText size={17} />
+                <div className="muted">
+                  Status:{" "}
+                  {material.isPublished
+                    ? "Published"
+                    : "Draft"}
+                </div>
 
-                        <div>
-                          <strong>
-                            {material.title}
-                          </strong>
+                {material.fileUrl && (
+                  <div
+                    className="muted"
+                    style={{
+                      marginTop: "8px",
+                    }}
+                  >
+                    File available
+                  </div>
+                )}
 
-                          <small>
-                            {material.description ||
-                              "No description"}
-                          </small>
-                        </div>
+                {material.externalUrl && (
+                  <div
+                    className="muted"
+                    style={{
+                      marginTop: "8px",
+                    }}
+                  >
+                    External link available
+                  </div>
+                )}
 
-                      </div>
-                    </td>
+                <div
+                  className="material-actions"
+                >
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() =>
+                      handleEdit(material)
+                    }
+                  >
+                    <Edit size={16} />
+                    Edit
+                  </button>
 
-                    <td>
-                      <strong>
-                        {material.course?.courseCode ||
-                          "-"}
-                      </strong>
-
-                      <br />
-
-                      <small>
-                        {material.course?.courseName ||
-                          ""}
-                      </small>
-                    </td>
-
-                    <td>
-                      {material.type}
-                    </td>
-
-                    <td>
-                      {material.topic || "-"}
-                    </td>
-
-                    <td>
-                      {material.isPublished
-                        ? "Published"
-                        : "Draft"}
-                    </td>
-
-                    <td>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "8px",
-                        }}
-                      >
-
-                        <button
-                          type="button"
-                          className="icon-button"
-                          onClick={() =>
-                            handleEdit(material)
-                          }
-                          title="Edit material"
-                        >
-                          <Pencil size={17} />
-                        </button>
-
-                        <button
-                          type="button"
-                          className="icon-button danger"
-                          onClick={() =>
-                            handleDelete(
-                              material._id
-                            )
-                          }
-                          title="Delete material"
-                        >
-                          <Trash2 size={17} />
-                        </button>
-
-                      </div>
-
-                    </td>
-
-                  </tr>
-                ))}
-
-              </tbody>
-
-            </table>
-
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() =>
+                      handleDelete(
+                        material._id
+                      )
+                    }
+                  >
+                    <Trash2 size={16} />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
-
       </div>
-
     </div>
   );
 }
