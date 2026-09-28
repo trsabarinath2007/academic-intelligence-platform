@@ -15,22 +15,34 @@ const {
 
 const router = express.Router();
 
-// Create Quiz
+// ==========================================
+// CREATE QUIZ
+// Faculty/Admin can create quizzes
+// ==========================================
+
 router.post(
   "/",
   protect,
-  authorize("student"),
+  authorize("faculty", "admin"),
   createQuiz
 );
 
-// Get All Quizzes
+// ==========================================
+// GET ALL QUIZZES
+// Faculty/Admin/Student can view quizzes
+// ==========================================
+
 router.get(
   "/",
   protect,
   getAllQuizzes
 );
 
-// Get My Quiz Attempts
+// ==========================================
+// GET MY QUIZ ATTEMPTS
+// Student only
+// ==========================================
+
 router.get(
   "/my-attempts",
   protect,
@@ -38,14 +50,22 @@ router.get(
   getMyQuizAttempts
 );
 
-// Get Quiz by ID
+// ==========================================
+// GET QUIZ BY ID
+// Authenticated users
+// ==========================================
+
 router.get(
   "/:id",
   protect,
   getQuizById
 );
 
-// Attempt Quiz
+// ==========================================
+// ATTEMPT QUIZ
+// Student only
+// ==========================================
+
 router.post(
   "/attempt",
   protect,
