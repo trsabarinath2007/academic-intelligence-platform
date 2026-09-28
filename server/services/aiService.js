@@ -1,3 +1,8 @@
+const sleep = (ms) =>
+  new Promise((resolve) =>
+    setTimeout(resolve, ms)
+  );
+
 const generateQuizWithAI = async ({
   subject,
   topic,
@@ -5,8 +10,10 @@ const generateQuizWithAI = async ({
   numberOfQuestions,
 }) => {
   const apiKey = process.env.GEMINI_API_KEY;
+
   const model =
-    process.env.GEMINI_MODEL || "gemini-3.8-flash";
+    process.env.GEMINI_MODEL ||
+    "gemini-3.8-flash";
 
   if (!apiKey) {
     throw new Error(
@@ -14,7 +21,8 @@ const generateQuizWithAI = async ({
     );
   }
 
-  const questionCount = Number(numberOfQuestions);
+  const questionCount =
+    Number(numberOfQuestions);
 
   if (
     !subject ||
@@ -39,234 +47,313 @@ const generateQuizWithAI = async ({
   const prompt = `
 You are an expert academic quiz generator.
 
-Generate ${questionCount} multiple-choice questions.
+Generate exactly ${questionCount} multiple-choice questions.
 
 Subject: ${subject}
 Topic: ${topic}
 Difficulty: ${difficulty}
 
 Requirements:
-- Generate exactly ${questionCount} questions.
-- Every question must have exactly 4 options.
-- There must be exactly one correct answer.
-- correctAnswer must be a NUMBER:
-  0 = first option
-  1 = second option
-  2 = third option
-  3 = fourth option
-- Add a short explanation for the correct answer.
-- Include the topic.
-- Include the difficulty.
-- Do not include markdown.
-- Return only valid JSON matching the requested schema.
+1. Exactly ${questionCount} questions.
+2. Exactly 4 options per question.
+3. Exactly one correct answer.
+4. correctAnswer must be an integer.
+5. 0 = first option.
+6. 1 = second option.
+7. 2 = third option.
+8. 3 = fourth option.
+9. Include a short explanation.
+10. Include topic.
+11. Include difficulty.
+12. Return only valid JSON.
+13. No markdown.
 `;
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify({
-        contents: [
+  const requestBody = {
+    contents: [
+      {
+        parts: [
           {
-            parts: [
-              {
-                text: prompt,
-              },
-            ],
+            text: prompt,
           },
         ],
+      },
+    ],
 
-        generationConfig: {
-          responseMimeType: "application/json",
+    generationConfig: {
+      responseMimeType:
+        "application/json",
 
-          responseSchema: {
-            type: "object",
+      responseSchema: {
+        type: "object",
 
-            properties: {
-              questions: {
-                type: "array",
+        properties: {
+          questions: {
+            type: "array",
 
-                items: {
-                  type: "object",
+            items: {
+              type: "object",
 
-                  properties: {
-                    question: {
-                      type: "string",
-                    },
+              properties: {
+                question: {
+                  type: "string",
+                },
 
-                    options: {
-                      type: "array",
-
-                      items: {
-                        type: "string",
-                      },
-                    },
-
-                    correctAnswer: {
-                      type: "integer",
-                    },
-
-                    explanation: {
-                      type: "string",
-                    },
-
-                    difficulty: {
-                      type: "string",
-                    },
-
-                    topic: {
-                      type: "string",
-                    },
+                options: {
+                  type: "array",
+                  items: {
+                    type: "string",
                   },
+                },
 
-                  required: [
-                    "question",
-                    "options",
-                    "correctAnswer",
-                    "explanation",
-                    "difficulty",
-                    "topic",
-                  ],
+                correctAnswer: {
+                  type: "integer",
+                },
+
+                explanation: {
+                  type: "string",
+                },
+
+                difficulty: {
+                  type: "string",
+                },
+
+                topic: {
+                  type: "string",
                 },
               },
-            },
 
-            required: ["questions"],
+              required: [
+                "question",
+                "options",
+                "correctAnswer",
+                "explanation",
+                "difficulty",
+                "topic",
+              ],
+            },
           },
         },
 
-        temperature: 0.7,
-      }),
-    }
-  );
+        required: [
+          "questions",
+        ],
+      },
+    },
+  };
 
-  const data = await response.json();
+  const url =
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
-  if (!response.ok) {
-    const apiError =
-      data?.error?.message ||
-      "Gemini API request failed";
+  const maxRetries = 3;
 
-    throw new Error(apiError);
-  }
+  let lastError = null;
 
-  const text =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!text) {
-    throw new Error(
-      "Gemini returned an empty response"
-    );
-  }
-
-  let parsed;
-
-  try {
-    parsed = JSON.parse(text);
-  } catch (error) {
-    throw new Error(
-      "Gemini returned invalid JSON"
-    );
-  }
-
-  if (
-    !parsed.questions ||
-    !Array.isArray(parsed.questions)
+  for (
+    let attempt = 0;
+    attempt <= maxRetries;
+    attempt++
   ) {
-    throw new Error(
-      "Invalid quiz response from Gemini"
-    );
-  }
+    try {
+      const response = await fetch(url, {
+        method: "POST",
 
-  if (
-    parsed.questions.length !==
-    questionCount
-  ) {
-    throw new Error(
-      `Gemini returned ${parsed.questions.length} questions instead of ${questionCount}`
-    );
-  }
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
 
-  const validatedQuestions =
-    parsed.questions.map(
-      (question, index) => {
-        if (
-          !question.question ||
-          typeof question.question !==
-            "string"
-        ) {
+        body: JSON.stringify(requestBody),
+      });
+
+      const data =
+        await response.json();
+
+      if (response.ok) {
+        const generatedText =
+          data?.candidates?.[0]
+            ?.content?.parts?.[0]?.text;
+
+        if (!generatedText) {
           throw new Error(
-            `Invalid question at index ${index}`
+            "Gemini returned an empty response"
+          );
+        }
+
+        let parsedResponse;
+
+        try {
+          parsedResponse =
+            JSON.parse(generatedText);
+        } catch (error) {
+          throw new Error(
+            "Gemini returned invalid JSON"
           );
         }
 
         if (
-          !Array.isArray(question.options) ||
-          question.options.length !== 4
+          !parsedResponse.questions ||
+          !Array.isArray(
+            parsedResponse.questions
+          )
         ) {
           throw new Error(
-            `Question ${
-              index + 1
-            } must have exactly 4 options`
+            "Invalid quiz response from Gemini"
           );
         }
-
-        const correctAnswer = Number(
-          question.correctAnswer
-        );
 
         if (
-          !Number.isInteger(
-            correctAnswer
-          ) ||
-          correctAnswer < 0 ||
-          correctAnswer > 3
+          parsedResponse.questions
+            .length !== questionCount
         ) {
           throw new Error(
-            `Invalid correct answer for question ${
-              index + 1
-            }`
+            `Expected ${questionCount} questions but received ${parsedResponse.questions.length}`
           );
         }
+
+        const questions =
+          parsedResponse.questions.map(
+            (question, index) => {
+              if (
+                !question.question ||
+                typeof question.question !==
+                  "string"
+              ) {
+                throw new Error(
+                  `Invalid question ${
+                    index + 1
+                  }`
+                );
+              }
+
+              if (
+                !Array.isArray(
+                  question.options
+                ) ||
+                question.options.length !== 4
+              ) {
+                throw new Error(
+                  `Question ${
+                    index + 1
+                  } must contain exactly 4 options`
+                );
+              }
+
+              const correctAnswer =
+                Number(
+                  question.correctAnswer
+                );
+
+              if (
+                !Number.isInteger(
+                  correctAnswer
+                ) ||
+                correctAnswer < 0 ||
+                correctAnswer > 3
+              ) {
+                throw new Error(
+                  `Invalid correct answer in question ${
+                    index + 1
+                  }`
+                );
+              }
+
+              return {
+                question:
+                  question.question.trim(),
+
+                options:
+                  question.options.map(
+                    (option) =>
+                      String(option).trim()
+                  ),
+
+                correctAnswer,
+
+                explanation:
+                  String(
+                    question.explanation ||
+                      ""
+                  ).trim(),
+
+                difficulty:
+                  String(
+                    question.difficulty ||
+                      difficulty
+                  ).trim(),
+
+                topic:
+                  String(
+                    question.topic ||
+                      topic
+                  ).trim(),
+              };
+            }
+          );
 
         return {
-          question:
-            question.question.trim(),
-
-          options: question.options.map(
-            (option) =>
-              String(option).trim()
-          ),
-
-          correctAnswer,
-
-          explanation:
-            String(
-              question.explanation || ""
-            ).trim(),
-
-          difficulty:
-            String(
-              question.difficulty ||
-                difficulty
-            ).trim(),
-
-          topic:
-            String(
-              question.topic || topic
-            ).trim(),
+          questions,
         };
       }
-    );
 
-  return {
-    questions: validatedQuestions,
-  };
+      const errorMessage =
+        data?.error?.message ||
+        "Gemini API request failed";
+
+      lastError = new Error(
+        errorMessage
+      );
+
+      const retryable =
+        response.status === 429 ||
+        response.status === 500 ||
+        response.status === 502 ||
+        response.status === 503 ||
+        response.status === 504;
+
+      if (
+        !retryable ||
+        attempt === maxRetries
+      ) {
+        throw lastError;
+      }
+
+      const delay =
+        2000 *
+        Math.pow(2, attempt);
+
+      console.log(
+        `Gemini temporarily unavailable. Retrying in ${delay}ms...`
+      );
+
+      await sleep(delay);
+    } catch (error) {
+      lastError = error;
+
+      if (
+        attempt === maxRetries
+      ) {
+        throw lastError;
+      }
+
+      const delay =
+        2000 *
+        Math.pow(2, attempt);
+
+      console.log(
+        `Gemini request failed. Retrying in ${delay}ms...`
+      );
+
+      await sleep(delay);
+    }
+  }
+
+  throw (
+    lastError ||
+    new Error(
+      "Gemini API request failed"
+    )
+  );
 };
 
 module.exports = {

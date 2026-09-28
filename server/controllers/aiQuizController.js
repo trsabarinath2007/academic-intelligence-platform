@@ -11,6 +11,19 @@ const generateAIQuiz = async (req, res) => {
       numberOfQuestions,
     } = req.body;
 
+    if (
+      !subject ||
+      !topic ||
+      !difficulty ||
+      !numberOfQuestions
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Subject, topic, difficulty and number of questions are required",
+      });
+    }
+
     const result =
       await generateQuizWithAI({
         subject,
@@ -19,7 +32,7 @@ const generateAIQuiz = async (req, res) => {
         numberOfQuestions,
       });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message:
         "AI quiz generated successfully",
@@ -31,7 +44,7 @@ const generateAIQuiz = async (req, res) => {
       error
     );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message:
         "Failed to generate AI quiz",
