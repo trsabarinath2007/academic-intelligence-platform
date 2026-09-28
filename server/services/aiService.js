@@ -1,41 +1,29 @@
-const sleep = (ms) =>
-  new Promise((resolve) =>
-    setTimeout(resolve, ms)
-  );
-
 const generateQuizWithAI = async ({
   subject,
   topic,
   difficulty,
   numberOfQuestions,
 }) => {
-  const apiKey = process.env.GEMINI_API_KEY;
-
+  const apiKey = process.env.GROQ_API_KEY;
   const model =
-    process.env.GEMINI_MODEL ||
-    "gemini-3.8-flash";
+    process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
   if (!apiKey) {
     throw new Error(
-      "GEMINI_API_KEY is not configured in .env"
+      "GROQ_API_KEY is not configured in .env"
     );
   }
 
-  const questionCount =
-    Number(numberOfQuestions);
-
-  if (
-    !subject ||
-    !topic ||
-    !difficulty ||
-    !questionCount
-  ) {
+  if (!subject || !topic || !difficulty) {
     throw new Error(
-      "Subject, topic, difficulty and number of questions are required"
+      "Subject, topic and difficulty are required"
     );
   }
 
+  const questionCount = Number(numberOfQuestions);
+
   if (
+    !Number.isInteger(questionCount) ||
     questionCount < 1 ||
     questionCount > 20
   ) {
@@ -45,7 +33,7 @@ const generateQuizWithAI = async ({
   }
 
   const prompt = `
-You are an expert academic quiz generator.
+You are an expert educational quiz generator.
 
 Generate exactly ${questionCount} multiple-choice questions.
 
@@ -54,306 +42,165 @@ Topic: ${topic}
 Difficulty: ${difficulty}
 
 Requirements:
-1. Exactly ${questionCount} questions.
-2. Exactly 4 options per question.
-3. Exactly one correct answer.
-4. correctAnswer must be an integer.
-5. 0 = first option.
-6. 1 = second option.
-7. 2 = third option.
-8. 3 = fourth option.
-9. Include a short explanation.
-10. Include topic.
-11. Include difficulty.
-12. Return only valid JSON.
-13. No markdown.
+- Each question must be relevant to the topic.
+- Questions must be educational and technically correct.
+- Each question must have exactly 4 options.
+- correctAnswer must be the numeric index of the correct option:
+  0 = first option
+  1 = second option
+  2 = third option
+  3 = fourth option
+- Include a short explanation.
+- Return only the structured JSON requested by the schema.
 `;
 
-  const requestBody = {
-    contents: [
-      {
-        parts: [
+  const response = await fetch(
+    "https://api.groq.com/openai/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
           {
-            text: prompt,
+            role: "system",
+            content:
+              "You are an expert educational quiz generator.",
+          },
+          {
+            role: "user",
+            content: prompt,
           },
         ],
-      },
-    ],
-
-    generationConfig: {
-      responseMimeType:
-        "application/json",
-
-      responseSchema: {
-        type: "object",
-
-        properties: {
-          questions: {
-            type: "array",
-
-            items: {
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "quiz_generation",
+            schema: {
               type: "object",
-
               properties: {
-                question: {
-                  type: "string",
-                },
-
-                options: {
+                questions: {
                   type: "array",
                   items: {
-                    type: "string",
+                    type: "object",
+                    properties: {
+                      question: {
+                        type: "string",
+                      },
+                      options: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                        minItems: 4,
+                        maxItems: 4,
+                      },
+                      correctAnswer: {
+                        type: "integer",
+                        minimum: 0,
+                        maximum: 3,
+                      },
+                      explanation: {
+                        type: "string",
+                      },
+                      difficulty: {
+                        type: "string",
+                      },
+                      topic: {
+                        type: "string",
+                      },
+                    },
+                    required: [
+                      "question",
+                      "options",
+                      "correctAnswer",
+                      "explanation",
+                      "difficulty",
+                      "topic",
+                    ],
+                    additionalProperties: false,
                   },
                 },
-
-                correctAnswer: {
-                  type: "integer",
-                },
-
-                explanation: {
-                  type: "string",
-                },
-
-                difficulty: {
-                  type: "string",
-                },
-
-                topic: {
-                  type: "string",
-                },
               },
-
-              required: [
-                "question",
-                "options",
-                "correctAnswer",
-                "explanation",
-                "difficulty",
-                "topic",
-              ],
+              required: ["questions"],
+              additionalProperties: false,
             },
           },
         },
+      }),
+    }
+  );
 
-        required: [
-          "questions",
-        ],
-      },
-    },
-  };
+  const data = await response.json();
 
-  const url =
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  if (!response.ok) {
+    console.error("Groq API error:", data);
 
-  const maxRetries = 3;
+    const message =
+      data?.error?.message ||
+      "Groq API request failed";
 
-  let lastError = null;
+    throw new Error(message);
+  }
 
-  for (
-    let attempt = 0;
-    attempt <= maxRetries;
-    attempt++
+  const content =
+    data?.choices?.[0]?.message?.content;
+
+  if (!content) {
+    throw new Error(
+      "Groq returned an empty response"
+    );
+  }
+
+  let parsed;
+
+  try {
+    parsed = JSON.parse(content);
+  } catch (error) {
+    console.error(
+      "Failed to parse Groq JSON:",
+      content
+    );
+
+    throw new Error(
+      "Groq returned invalid JSON"
+    );
+  }
+
+  if (
+    !parsed.questions ||
+    !Array.isArray(parsed.questions)
   ) {
-    try {
-      const response = await fetch(url, {
-        method: "POST",
+    throw new Error(
+      "Invalid quiz structure returned by Groq"
+    );
+  }
 
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
+  if (parsed.questions.length !== questionCount) {
+    throw new Error(
+      `Expected ${questionCount} questions but received ${parsed.questions.length}`
+    );
+  }
 
-        body: JSON.stringify(requestBody),
-      });
-
-      const data =
-        await response.json();
-
-      if (response.ok) {
-        const generatedText =
-          data?.candidates?.[0]
-            ?.content?.parts?.[0]?.text;
-
-        if (!generatedText) {
-          throw new Error(
-            "Gemini returned an empty response"
-          );
-        }
-
-        let parsedResponse;
-
-        try {
-          parsedResponse =
-            JSON.parse(generatedText);
-        } catch (error) {
-          throw new Error(
-            "Gemini returned invalid JSON"
-          );
-        }
-
-        if (
-          !parsedResponse.questions ||
-          !Array.isArray(
-            parsedResponse.questions
-          )
-        ) {
-          throw new Error(
-            "Invalid quiz response from Gemini"
-          );
-        }
-
-        if (
-          parsedResponse.questions
-            .length !== questionCount
-        ) {
-          throw new Error(
-            `Expected ${questionCount} questions but received ${parsedResponse.questions.length}`
-          );
-        }
-
-        const questions =
-          parsedResponse.questions.map(
-            (question, index) => {
-              if (
-                !question.question ||
-                typeof question.question !==
-                  "string"
-              ) {
-                throw new Error(
-                  `Invalid question ${
-                    index + 1
-                  }`
-                );
-              }
-
-              if (
-                !Array.isArray(
-                  question.options
-                ) ||
-                question.options.length !== 4
-              ) {
-                throw new Error(
-                  `Question ${
-                    index + 1
-                  } must contain exactly 4 options`
-                );
-              }
-
-              const correctAnswer =
-                Number(
-                  question.correctAnswer
-                );
-
-              if (
-                !Number.isInteger(
-                  correctAnswer
-                ) ||
-                correctAnswer < 0 ||
-                correctAnswer > 3
-              ) {
-                throw new Error(
-                  `Invalid correct answer in question ${
-                    index + 1
-                  }`
-                );
-              }
-
-              return {
-                question:
-                  question.question.trim(),
-
-                options:
-                  question.options.map(
-                    (option) =>
-                      String(option).trim()
-                  ),
-
-                correctAnswer,
-
-                explanation:
-                  String(
-                    question.explanation ||
-                      ""
-                  ).trim(),
-
-                difficulty:
-                  String(
-                    question.difficulty ||
-                      difficulty
-                  ).trim(),
-
-                topic:
-                  String(
-                    question.topic ||
-                      topic
-                  ).trim(),
-              };
-            }
-          );
-
-        return {
-          questions,
-        };
-      }
-
-      const errorMessage =
-        data?.error?.message ||
-        "Gemini API request failed";
-
-      lastError = new Error(
-        errorMessage
+  for (const question of parsed.questions) {
+    if (
+      !question.question ||
+      !Array.isArray(question.options) ||
+      question.options.length !== 4 ||
+      !Number.isInteger(question.correctAnswer) ||
+      question.correctAnswer < 0 ||
+      question.correctAnswer > 3
+    ) {
+      throw new Error(
+        "Groq returned an invalid question format"
       );
-
-      const retryable =
-        response.status === 429 ||
-        response.status === 500 ||
-        response.status === 502 ||
-        response.status === 503 ||
-        response.status === 504;
-
-      if (
-        !retryable ||
-        attempt === maxRetries
-      ) {
-        throw lastError;
-      }
-
-      const delay =
-        2000 *
-        Math.pow(2, attempt);
-
-      console.log(
-        `Gemini temporarily unavailable. Retrying in ${delay}ms...`
-      );
-
-      await sleep(delay);
-    } catch (error) {
-      lastError = error;
-
-      if (
-        attempt === maxRetries
-      ) {
-        throw lastError;
-      }
-
-      const delay =
-        2000 *
-        Math.pow(2, attempt);
-
-      console.log(
-        `Gemini request failed. Retrying in ${delay}ms...`
-      );
-
-      await sleep(delay);
     }
   }
 
-  throw (
-    lastError ||
-    new Error(
-      "Gemini API request failed"
-    )
-  );
+  return parsed;
 };
 
 module.exports = {

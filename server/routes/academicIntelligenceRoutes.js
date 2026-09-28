@@ -2,6 +2,7 @@ const express = require("express");
 
 const {
   getMyAcademicIntelligence,
+  getMyAIAnalysis,
 } = require("../controllers/academicIntelligenceController");
 
 const {
@@ -16,6 +17,13 @@ router.get(
   protect,
   authorize("student"),
   getMyAcademicIntelligence
+);
+
+router.get(
+  "/student/ai-analysis",
+  protect,
+  authorize("student"),
+  getMyAIAnalysis
 );
 
 module.exports = router;
