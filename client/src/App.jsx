@@ -20,6 +20,8 @@ import QuizPerformance from "./pages/QuizPerformance";
 import AssignmentPerformance from "./pages/AssignmentPerformance";
 import StudentAssignments from "./pages/StudentAssignments";
 import PerformanceInsights from "./pages/PerformanceInsights";
+import StudentStudyAssistant from "./pages/StudentStudyAssistant";
+import StudentAIAnalysis from "./pages/StudentAIAnalysis";
 
 import FacultyDashboard from "./pages/FacultyDashboard";
 import FacultyStudents from "./pages/FacultyStudents";
@@ -103,6 +105,11 @@ export default function App() {
         />
 
         <Route
+          path="/student-quizzes"
+          element={<StudentQuizzes />}
+        />
+
+        <Route
           path="/assignment-performance"
           element={<AssignmentPerformance />}
         />
@@ -110,6 +117,16 @@ export default function App() {
         <Route
           path="/performance-insights"
           element={<PerformanceInsights />}
+        />
+
+        <Route
+          path="/student-study-assistant"
+          element={<StudentStudyAssistant />}
+        />
+
+        <Route
+          path="/student-ai-analysis"
+          element={<StudentAIAnalysis />}
         />
 
         {/* ================= FACULTY ================= */}
@@ -159,6 +176,11 @@ export default function App() {
           element={<FacultyAnalytics />}
         />
 
+        <Route
+          path="/faculty-quizzes"
+          element={<FacultyQuizzes />}
+        />
+
         {/* ================= ADMIN ================= */}
 
         <Route
@@ -175,14 +197,6 @@ export default function App() {
           path="/admin-courses"
           element={<AdminCourses />}
         />
-        <Route
-  path="/faculty-quizzes"
-  element={<FacultyQuizzes />}
-/>
-<Route
-  path="/student-quizzes"
-  element={<StudentQuizzes />}
-/>
 
         {/* ================= 404 ================= */}
 
