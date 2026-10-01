@@ -1,12 +1,14 @@
 const express = require("express");
 
 const {
-  getPosts,
-  createPost,
-  addComment,
-  toggleLike,
-  deletePost,
-} = require("../controllers/discussionController");
+  getMyNotifications,
+  createNotification,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  deleteNotification,
+} = require(
+  "../controllers/notificationController"
+);
 
 const {
   protect,
@@ -23,40 +25,36 @@ router.get(
     "faculty",
     "admin"
   ),
-  getPosts
+  getMyNotifications
 );
 
 router.post(
   "/",
   protect,
-  authorize(
-    "student",
-    "faculty",
-    "admin"
-  ),
-  createPost
+  authorize("faculty", "admin"),
+  createNotification
 );
 
-router.post(
-  "/:id/comments",
+router.patch(
+  "/read-all",
   protect,
   authorize(
     "student",
     "faculty",
     "admin"
   ),
-  addComment
+  markAllNotificationsAsRead
 );
 
-router.post(
-  "/:id/like",
+router.patch(
+  "/:id/read",
   protect,
   authorize(
     "student",
     "faculty",
     "admin"
   ),
-  toggleLike
+  markNotificationAsRead
 );
 
 router.delete(
@@ -67,7 +65,7 @@ router.delete(
     "faculty",
     "admin"
   ),
-  deletePost
+  deleteNotification
 );
 
 module.exports = router;

@@ -7,6 +7,8 @@ const {
   getFacultyAIInsights,
 } = require("../controllers/academicIntelligenceController");
 
+const discussionRoutes = require("./discussionRoutes");
+
 const {
   protect,
   authorize,
@@ -40,6 +42,11 @@ router.post(
   protect,
   authorize("faculty", "admin"),
   getFacultyAIInsights
+);
+
+router.use(
+  "/discussion",
+  discussionRoutes
 );
 
 module.exports = router;
