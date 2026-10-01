@@ -1,4 +1,5 @@
 import React from "react";
+
 import {
   BrowserRouter,
   Routes,
@@ -6,8 +7,17 @@ import {
   Navigate,
 } from "react-router-dom";
 
+// =====================================================
+// AUTH / GENERAL
+// =====================================================
+
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
+
+// =====================================================
+// STUDENT
+// =====================================================
 
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentProfile from "./pages/StudentProfile";
@@ -22,30 +32,57 @@ import StudentAssignments from "./pages/StudentAssignments";
 import PerformanceInsights from "./pages/PerformanceInsights";
 import StudentStudyAssistant from "./pages/StudentStudyAssistant";
 import StudentAIAnalysis from "./pages/StudentAIAnalysis";
+import StudentQuizzes from "./pages/StudentQuizzes";
+
+// =====================================================
+// FACULTY
+// =====================================================
 
 import FacultyDashboard from "./pages/FacultyDashboard";
 import FacultyStudents from "./pages/FacultyStudents";
+import FacultyStudentDetails from "./pages/FacultyStudentDetails";
 import FacultyCourses from "./pages/FacultyCourses";
 import FacultyAttendance from "./pages/FacultyAttendance";
 import FacultyAssignments from "./pages/FacultyAssignments";
 import FacultySubmissions from "./pages/FacultySubmissions";
 import FacultyAnalytics from "./pages/FacultyAnalytics";
-import FacultyStudentDetails from "./pages/FacultyStudentDetails";
 import FacultyLearningMaterials from "./pages/FacultyLearningMaterials";
+import FacultyAIInsights from "./pages/FacultyAIInsights";
+import FacultyQuizzes from "./pages/FacultyQuizzes";
+
+// =====================================================
+// ADMIN
+// =====================================================
 
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminStudents from "./pages/AdminStudents";
 import AdminCourses from "./pages/AdminCourses";
-import FacultyQuizzes from "./pages/FacultyQuizzes";
-import StudentQuizzes from "./pages/StudentQuizzes";
 
-import NotFound from "./pages/NotFound";
+// =====================================================
+// COMMON
+// =====================================================
 
-export default function App() {
+import DiscussionForum from "./pages/DiscussionForum";
+import Notifications from "./pages/Notifications";
+
+// =====================================================
+// LAYOUT
+// =====================================================
+
+import Layout from "./components/Layout";
+
+// =====================================================
+// APP
+// =====================================================
+
+function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* ================= PUBLIC ================= */}
+
+        {/* =================================================
+            PUBLIC ROUTES
+        ================================================= */}
 
         <Route
           path="/"
@@ -57,148 +94,295 @@ export default function App() {
           element={<Login />}
         />
 
-        {/* ================= STUDENT ================= */}
+        {/* =================================================
+            STUDENT ROUTES
+        ================================================= */}
 
         <Route
           path="/student-dashboard"
-          element={<StudentDashboard />}
+          element={
+            <Layout role="student">
+              <StudentDashboard />
+            </Layout>
+          }
         />
 
         <Route
           path="/student-profile"
-          element={<StudentProfile />}
+          element={
+            <Layout role="student">
+              <StudentProfile />
+            </Layout>
+          }
         />
 
         <Route
           path="/student-courses"
-          element={<Courses />}
+          element={
+            <Layout role="student">
+              <Courses />
+            </Layout>
+          }
         />
 
         <Route
           path="/learning-materials"
-          element={<LearningMaterials />}
+          element={
+            <Layout role="student">
+              <LearningMaterials />
+            </Layout>
+          }
         />
 
         <Route
           path="/learning-materials/:id"
-          element={<LearningMaterialDetails />}
+          element={
+            <Layout role="student">
+              <LearningMaterialDetails />
+            </Layout>
+          }
         />
 
         <Route
           path="/academic-records"
-          element={<AcademicRecords />}
+          element={
+            <Layout role="student">
+              <AcademicRecords />
+            </Layout>
+          }
         />
 
         <Route
           path="/attendance"
-          element={<Attendance />}
-        />
-
-        <Route
-          path="/student-assignments"
-          element={<StudentAssignments />}
+          element={
+            <Layout role="student">
+              <Attendance />
+            </Layout>
+          }
         />
 
         <Route
           path="/quiz-performance"
-          element={<QuizPerformance />}
+          element={
+            <Layout role="student">
+              <QuizPerformance />
+            </Layout>
+          }
         />
 
         <Route
           path="/student-quizzes"
-          element={<StudentQuizzes />}
+          element={
+            <Layout role="student">
+              <StudentQuizzes />
+            </Layout>
+          }
         />
 
         <Route
           path="/assignment-performance"
-          element={<AssignmentPerformance />}
+          element={
+            <Layout role="student">
+              <AssignmentPerformance />
+            </Layout>
+          }
+        />
+
+        <Route
+          path="/student-assignments"
+          element={
+            <Layout role="student">
+              <StudentAssignments />
+            </Layout>
+          }
         />
 
         <Route
           path="/performance-insights"
-          element={<PerformanceInsights />}
+          element={
+            <Layout role="student">
+              <PerformanceInsights />
+            </Layout>
+          }
         />
 
         <Route
           path="/student-study-assistant"
-          element={<StudentStudyAssistant />}
+          element={
+            <Layout role="student">
+              <StudentStudyAssistant />
+            </Layout>
+          }
         />
 
         <Route
           path="/student-ai-analysis"
-          element={<StudentAIAnalysis />}
+          element={
+            <Layout role="student">
+              <StudentAIAnalysis />
+            </Layout>
+          }
         />
 
-        {/* ================= FACULTY ================= */}
+        {/* =================================================
+            FACULTY ROUTES
+        ================================================= */}
 
         <Route
           path="/faculty-dashboard"
-          element={<FacultyDashboard />}
+          element={
+            <Layout role="faculty">
+              <FacultyDashboard />
+            </Layout>
+          }
         />
 
         <Route
           path="/faculty-students"
-          element={<FacultyStudents />}
+          element={
+            <Layout role="faculty">
+              <FacultyStudents />
+            </Layout>
+          }
         />
 
         <Route
           path="/faculty-student-details/:id"
-          element={<FacultyStudentDetails />}
+          element={
+            <Layout role="faculty">
+              <FacultyStudentDetails />
+            </Layout>
+          }
         />
 
         <Route
           path="/faculty-courses"
-          element={<FacultyCourses />}
+          element={
+            <Layout role="faculty">
+              <FacultyCourses />
+            </Layout>
+          }
         />
 
         <Route
           path="/faculty-learning-materials"
-          element={<FacultyLearningMaterials />}
+          element={
+            <Layout role="faculty">
+              <FacultyLearningMaterials />
+            </Layout>
+          }
         />
 
         <Route
           path="/faculty-attendance"
-          element={<FacultyAttendance />}
+          element={
+            <Layout role="faculty">
+              <FacultyAttendance />
+            </Layout>
+          }
         />
 
         <Route
           path="/faculty-assignments"
-          element={<FacultyAssignments />}
+          element={
+            <Layout role="faculty">
+              <FacultyAssignments />
+            </Layout>
+          }
         />
 
         <Route
           path="/faculty-submissions"
-          element={<FacultySubmissions />}
+          element={
+            <Layout role="faculty">
+              <FacultySubmissions />
+            </Layout>
+          }
         />
 
         <Route
           path="/faculty-analytics"
-          element={<FacultyAnalytics />}
+          element={
+            <Layout role="faculty">
+              <FacultyAnalytics />
+            </Layout>
+          }
         />
 
         <Route
           path="/faculty-quizzes"
-          element={<FacultyQuizzes />}
+          element={
+            <Layout role="faculty">
+              <FacultyQuizzes />
+            </Layout>
+          }
         />
 
-        {/* ================= ADMIN ================= */}
+        <Route
+          path="/faculty-ai-insights"
+          element={
+            <Layout role="faculty">
+              <FacultyAIInsights />
+            </Layout>
+          }
+        />
+
+        {/* =================================================
+            ADMIN ROUTES
+        ================================================= */}
 
         <Route
           path="/admin-dashboard"
-          element={<AdminDashboard />}
+          element={
+            <Layout role="admin">
+              <AdminDashboard />
+            </Layout>
+          }
         />
 
         <Route
           path="/admin-students"
-          element={<AdminStudents />}
+          element={
+            <Layout role="admin">
+              <AdminStudents />
+            </Layout>
+          }
         />
 
         <Route
           path="/admin-courses"
-          element={<AdminCourses />}
+          element={
+            <Layout role="admin">
+              <AdminCourses />
+            </Layout>
+          }
         />
 
-        {/* ================= 404 ================= */}
+        {/* =================================================
+            COMMON ROUTES
+        ================================================= */}
+
+        <Route
+          path="/discussion-forum"
+          element={
+            <Layout>
+              <DiscussionForum />
+            </Layout>
+          }
+        />
+
+        <Route
+          path="/notifications"
+          element={
+            <Layout>
+              <Notifications />
+            </Layout>
+          }
+        />
+
+        {/* =================================================
+            404
+        ================================================= */}
 
         <Route
           path="/404"
@@ -214,7 +398,10 @@ export default function App() {
             />
           }
         />
+
       </Routes>
     </BrowserRouter>
   );
 }
+
+export default App;

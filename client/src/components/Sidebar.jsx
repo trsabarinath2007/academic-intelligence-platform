@@ -1,10 +1,16 @@
 import React from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import {
+  NavLink,
+  useNavigate,
+} from "react-router-dom";
 
 function Sidebar({
   role = "student",
-  isOpen = false,
+  isOpen = true,
+  collapsed = false,
+  isMobile = false,
   onClose,
+  onToggle,
 }) {
   const navigate = useNavigate();
 
@@ -25,6 +31,11 @@ function Sidebar({
       icon: "courses",
     },
     {
+      label: "Learning Materials",
+      path: "/learning-materials",
+      icon: "materials",
+    },
+    {
       label: "Academic Records",
       path: "/academic-records",
       icon: "records",
@@ -41,7 +52,7 @@ function Sidebar({
     },
     {
       label: "Assignments",
-      path: "/assignment-performance",
+      path: "/student-assignments",
       icon: "assignment",
     },
     {
@@ -58,6 +69,16 @@ function Sidebar({
       label: "AI Study Assistant",
       path: "/student-study-assistant",
       icon: "ai",
+    },
+    {
+      label: "Discussion Forum",
+      path: "/discussion-forum",
+      icon: "discussion",
+    },
+    {
+      label: "Notifications",
+      path: "/notifications",
+      icon: "notification",
     },
   ];
 
@@ -78,6 +99,11 @@ function Sidebar({
       icon: "courses",
     },
     {
+      label: "Learning Materials",
+      path: "/faculty-learning-materials",
+      icon: "materials",
+    },
+    {
       label: "Attendance",
       path: "/faculty-attendance",
       icon: "attendance",
@@ -101,6 +127,21 @@ function Sidebar({
       label: "Analytics",
       path: "/faculty-analytics",
       icon: "analytics",
+    },
+    {
+      label: "AI Class Insights",
+      path: "/faculty-ai-insights",
+      icon: "ai",
+    },
+    {
+      label: "Discussion Forum",
+      path: "/discussion-forum",
+      icon: "discussion",
+    },
+    {
+      label: "Notifications",
+      path: "/notifications",
+      icon: "notification",
     },
   ];
 
@@ -121,29 +162,19 @@ function Sidebar({
       icon: "courses",
     },
     {
-      label: "Attendance",
-      path: "/faculty-attendance",
-      icon: "attendance",
-    },
-    {
-      label: "Assignments",
-      path: "/faculty-assignments",
-      icon: "assignment",
-    },
-    {
-      label: "Submissions",
-      path: "/faculty-submissions",
-      icon: "submissions",
-    },
-    {
-      label: "Quizzes",
-      path: "/faculty-quizzes",
-      icon: "quiz",
-    },
-    {
       label: "Analytics",
       path: "/faculty-analytics",
       icon: "analytics",
+    },
+    {
+      label: "Discussion Forum",
+      path: "/discussion-forum",
+      icon: "discussion",
+    },
+    {
+      label: "Notifications",
+      path: "/notifications",
+      icon: "notification",
     },
   ];
 
@@ -251,6 +282,17 @@ function Sidebar({
           </svg>
         );
 
+      case "materials":
+        return (
+          <svg {...props}>
+            <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v15H6a2 2 0 0 0-2 2V5Z" />
+            <path d="M6 20h14" />
+            <path d="M8 7h8" />
+            <path d="M8 11h6" />
+            <path d="M8 15h7" />
+          </svg>
+        );
+
       case "records":
         return (
           <svg {...props}>
@@ -330,6 +372,17 @@ function Sidebar({
           </svg>
         );
 
+      case "insights":
+        return (
+          <svg {...props}>
+            <path d="M4 19V9" />
+            <path d="M10 19V5" />
+            <path d="M16 19v-8" />
+            <path d="M22 19H2" />
+            <path d="m4 7 6-3 6 4 6-5" />
+          </svg>
+        );
+
       case "ai":
         return (
           <svg {...props}>
@@ -338,16 +391,23 @@ function Sidebar({
             <path d="M6 12v2a6 6 0 0 0 12 0v-2" />
             <path d="M9 20h6" />
             <path d="M12 17v3" />
-            <circle
-              cx="9"
-              cy="8"
-              r="1"
-            />
-            <circle
-              cx="15"
-              cy="8"
-              r="1"
-            />
+          </svg>
+        );
+
+      case "discussion":
+        return (
+          <svg {...props}>
+            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 4v-4.5A2.5 2.5 0 0 1 3 13V5.5h1Z" />
+            <path d="M8 8h8" />
+            <path d="M8 12h5" />
+          </svg>
+        );
+
+      case "notification":
+        return (
+          <svg {...props}>
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+            <path d="M10 21h4" />
           </svg>
         );
 
@@ -381,43 +441,92 @@ function Sidebar({
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
+    navigate("/login");
+
     if (onClose) {
       onClose();
     }
-
-    navigate("/login");
   };
+
+  const width =
+    collapsed && !isMobile
+      ? 76
+      : 240;
 
   return (
     <>
-      {isOpen && (
+      {isMobile && isOpen && (
         <button
           type="button"
-          aria-label="Close sidebar"
-          className="fixed inset-0 z-40 bg-black/30 lg:hidden"
           onClick={onClose}
+          aria-label="Close sidebar"
+          className="fixed inset-0 z-40 bg-black/30"
         />
       )}
 
       <aside
-        className={`
-          fixed left-0 top-0 z-50
-          flex h-screen w-[230px]
+        style={{
+          width: `${width}px`,
+          transform:
+            isMobile && !isOpen
+              ? "translateX(-100%)"
+              : "translateX(0)",
+        }}
+        className="
+          fixed
+          left-0
+          top-0
+          z-50
+          flex
+          h-screen
           flex-col
-          border-r border-[#E7EBF1]
+          overflow-hidden
+          border-r
+          border-[#E5EAF0]
           bg-white
-          shadow-[4px_0_20px_rgba(15,23,42,0.05)]
-          transition-transform duration-300
-          lg:translate-x-0
-          ${isOpen ? "translate-x-0" : "-translate-x-full"}
-        `}
+          shadow-[4px_0_18px_rgba(15,23,42,0.06)]
+          transition-all
+          duration-300
+        "
       >
-        <div className="flex h-[76px] shrink-0 items-center justify-between border-b border-[#EEF1F5] px-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[#315EFB] text-white shadow-[0_5px_12px_rgba(49,94,251,0.20)]">
+
+        {/* LOGO */}
+
+        <div
+          className={`
+            relative
+            flex
+            h-[82px]
+            shrink-0
+            items-center
+            border-b
+            border-[#EEF1F5]
+            ${
+              collapsed && !isMobile
+                ? "justify-center px-2"
+                : "px-4"
+            }
+          `}
+        >
+
+          <div
+            className={`
+              flex
+              min-w-0
+              items-center
+              ${
+                collapsed && !isMobile
+                  ? "justify-center"
+                  : "gap-3"
+              }
+            `}
+          >
+
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#315EFB] text-white shadow-[0_5px_12px_rgba(49,94,251,0.20)]">
+
               <svg
-                width="19"
-                height="19"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -429,73 +538,162 @@ function Sidebar({
                 <path d="M6 12v5c3 2.2 9 2.2 12 0v-5" />
                 <path d="M21 10v5" />
               </svg>
+
             </div>
 
-            <div className="min-w-0">
-              <h1 className="text-[14px] font-bold leading-[1.05] tracking-[-0.02em] text-[#172033]">
-                Academic
-                <br />
-                Intelligence
-              </h1>
+            {(!collapsed || isMobile) && (
+              <div className="min-w-0">
+                <h1 className="text-[15px] font-extrabold leading-[1.05] tracking-[-0.02em] text-[#172033]">
+                  Academic
+                  <br />
+                  Intelligence
+                </h1>
 
-              <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.14em] text-[#7C5CF6]">
-                {portalName}
-              </p>
-            </div>
+                <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.15em] text-[#7C5CF6]">
+                  {portalName}
+                </p>
+              </div>
+            )}
+
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close sidebar"
-            className="
-              flex h-8 w-8 shrink-0
-              items-center justify-center
-              rounded-lg
-              border border-[#E6EAF0]
-              bg-white
-              text-[#667085]
-              transition
-              hover:bg-[#F5F7FB]
-              hover:text-[#172033]
-              lg:hidden
-            "
-          >
-            <svg
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
+          {!isMobile && (
+            <button
+              type="button"
+              onClick={onToggle}
+              aria-label={
+                collapsed
+                  ? "Expand sidebar"
+                  : "Collapse sidebar"
+              }
+              className={`
+                absolute
+                top-[27px]
+                ${
+                  collapsed
+                    ? "left-[58px]"
+                    : "right-3"
+                }
+                flex
+                h-7
+                w-7
+                items-center
+                justify-center
+                rounded-full
+                border
+                border-[#E2E8F0]
+                bg-white
+                text-[#64748B]
+                shadow-sm
+                hover:text-[#315EFB]
+              `}
             >
-              <path d="M6 6l12 12" />
-              <path d="M18 6 6 18" />
-            </svg>
-          </button>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                {collapsed ? (
+                  <path d="m9 18 6-6-6-6" />
+                ) : (
+                  <path d="m15 18-6-6 6-6" />
+                )}
+              </svg>
+            </button>
+          )}
+
+          {isMobile && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="
+                absolute
+                right-3
+                top-[27px]
+                flex
+                h-7
+                w-7
+                items-center
+                justify-center
+                rounded-full
+                border
+                border-[#E2E8F0]
+                bg-white
+                text-[#64748B]
+              "
+              aria-label="Close sidebar"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <path d="M6 6l12 12" />
+                <path d="M18 6 6 18" />
+              </svg>
+            </button>
+          )}
+
         </div>
 
+        {/* MENU */}
+
         <div className="flex-1 overflow-y-auto px-3 py-5">
-          <p className="mb-3 px-3 text-[9px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">
-            {sectionName}
-          </p>
+
+          {!collapsed || isMobile ? (
+            <p className="mb-3 px-3 text-[9px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">
+              {role === "admin"
+                ? "Administration"
+                : role === "faculty"
+                ? "Faculty"
+                : "Student"}
+            </p>
+          ) : (
+            <div className="mb-3 h-[14px]" />
+          )}
 
           <nav className="space-y-1">
+
             {links.map((link) => (
               <NavLink
                 key={`${link.path}-${link.label}`}
                 to={link.path}
-                onClick={onClose}
+                onClick={() => {
+                  if (
+                    isMobile &&
+                    onClose
+                  ) {
+                    onClose();
+                  }
+                }}
+                title={
+                  collapsed &&
+                  !isMobile
+                    ? link.label
+                    : undefined
+                }
                 className={({ isActive }) =>
                   `
-                    group flex min-h-[40px]
-                    items-center gap-3
+                    group
+                    flex
+                    min-h-[40px]
+                    items-center
                     rounded-[9px]
-                    px-3
-                    text-[13px]
-                    font-medium
                     transition-all
+                    ${
+                      collapsed &&
+                      !isMobile
+                        ? "justify-center px-2"
+                        : "gap-3 px-3"
+                    }
                     ${
                       isActive
                         ? "bg-[#315EFB] text-white shadow-[0_4px_10px_rgba(49,94,251,0.16)]"
@@ -508,8 +706,12 @@ function Sidebar({
                   <>
                     <span
                       className={`
-                        flex h-7 w-7 shrink-0
-                        items-center justify-center
+                        flex
+                        h-7
+                        w-7
+                        shrink-0
+                        items-center
+                        justify-center
                         rounded-[7px]
                         ${
                           isActive
@@ -518,68 +720,98 @@ function Sidebar({
                         }
                       `}
                     >
-                      {getIcon(link.icon)}
+                      {getIcon(
+                        link.icon
+                      )}
                     </span>
 
-                    <span className="truncate">
-                      {link.label}
-                    </span>
+                    {(!collapsed ||
+                      isMobile) && (
+                      <span className="truncate whitespace-nowrap text-[13px] font-medium">
+                        {link.label}
+                      </span>
+                    )}
                   </>
                 )}
               </NavLink>
             ))}
+
           </nav>
         </div>
 
+        {/* BOTTOM */}
+
         <div className="shrink-0 border-t border-[#EEF1F5] px-3 py-3">
+
           <button
             type="button"
-            className="
-              flex min-h-[38px]
+            className={`
+              flex
+              min-h-[38px]
               w-full
-              items-center gap-3
+              items-center
               rounded-[9px]
-              px-3
               text-[13px]
               font-medium
               text-[#526071]
-              transition
               hover:bg-[#F5F7FB]
-              hover:text-[#172033]
-            "
+              ${
+                collapsed && !isMobile
+                  ? "justify-center"
+                  : "gap-3 px-3"
+              }
+            `}
           >
             <span className="flex h-7 w-7 items-center justify-center text-[#718096]">
               {getIcon("settings")}
             </span>
 
-            <span>Settings</span>
+            {(!collapsed ||
+              isMobile) && (
+              <span>
+                Settings
+              </span>
+            )}
+
           </button>
 
           <button
             type="button"
             onClick={handleLogout}
-            className="
+            className={`
               mt-1
-              flex min-h-[38px]
+              flex
+              min-h-[38px]
               w-full
-              items-center gap-3
+              items-center
               rounded-[9px]
-              px-3
               text-[13px]
               font-medium
               text-[#526071]
-              transition
               hover:bg-red-50
               hover:text-red-600
-            "
+              ${
+                collapsed && !isMobile
+                  ? "justify-center"
+                  : "gap-3 px-3"
+              }
+            `}
           >
             <span className="flex h-7 w-7 items-center justify-center">
               {getIcon("logout")}
             </span>
 
-            <span>Logout</span>
+            {(!collapsed ||
+              isMobile) && (
+              <span>
+                Logout
+              </span>
+            )}
+
           </button>
+
         </div>
+
       </aside>
     </>
   );
