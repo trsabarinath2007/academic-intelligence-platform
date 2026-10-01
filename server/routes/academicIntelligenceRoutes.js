@@ -4,6 +4,7 @@ const {
   getMyAcademicIntelligence,
   getMyAIAnalysis,
   studyAssistantChat,
+  getFacultyAIInsights,
 } = require("../controllers/academicIntelligenceController");
 
 const {
@@ -32,6 +33,13 @@ router.post(
   protect,
   authorize("student"),
   studyAssistantChat
+);
+
+router.post(
+  "/faculty/ai-insights",
+  protect,
+  authorize("faculty", "admin"),
+  getFacultyAIInsights
 );
 
 module.exports = router;

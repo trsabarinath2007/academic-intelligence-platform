@@ -10,6 +10,10 @@ const {
   chatWithStudyAssistant,
 } = require("../services/studyAssistantService");
 
+const {
+  generateFacultyAIInsights,
+} = require("../services/facultyAIService");
+
 const getMyAcademicIntelligence =
   async (req, res) => {
     try {
@@ -132,8 +136,46 @@ const studyAssistantChat =
     }
   };
 
+const getFacultyAIInsights =
+  async (req, res) => {
+    try {
+      const { analytics } = req.body;
+
+      if (!analytics) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Faculty analytics data is required",
+        });
+      }
+
+      const result =
+        await generateFacultyAIInsights(
+          analytics
+        );
+
+      return res.status(200).json({
+        success: true,
+        insights: result,
+      });
+    } catch (error) {
+      console.error(
+        "Faculty AI insights error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to generate faculty AI insights",
+        error: error.message,
+      });
+    }
+  };
+
 module.exports = {
   getMyAcademicIntelligence,
   getMyAIAnalysis,
   studyAssistantChat,
+  getFacultyAIInsights,
 };
