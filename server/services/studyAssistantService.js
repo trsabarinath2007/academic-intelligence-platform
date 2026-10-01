@@ -3,124 +3,102 @@ const chatWithStudyAssistant = async ({
   conversation = [],
   intelligence,
 }) => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  const model =
-    process.env.GEMINI_MODEL || "gemini-3.8-flash";
+  const baseUrl =
+    process.env.OLLAMA_BASE_URL ||
+    "http://localhost:11434";
 
-  if (!apiKey) {
-    throw new Error(
-      "GEMINI_API_KEY is not configured in .env"
-    );
-  }
+  const model =
+    process.env.OLLAMA_MODEL ||
+    "gemma3:4b";
 
   if (!message || !message.trim()) {
     throw new Error("Message is required");
   }
 
-  const cleanConversation = Array.isArray(conversation)
-    ? conversation
-        .filter(
-          (item) =>
-            item &&
-            (item.role === "user" ||
-              item.role === "model") &&
-            typeof item.content === "string" &&
-            item.content.trim()
-        )
-        .slice(-8)
-    : [];
+  const cleanConversation =
+    Array.isArray(conversation)
+      ? conversation
+          .filter(
+            (item) =>
+              item &&
+              (item.role === "user" ||
+                item.role === "assistant") &&
+              typeof item.content ===
+                "string" &&
+              item.content.trim()
+          )
+          .slice(-8)
+      : [];
 
-  const academicContext = intelligence
-    ? JSON.stringify(
-        {
-          metrics: intelligence.metrics,
-          intelligence: intelligence.intelligence,
-        },
-        null,
-        2
-      )
-    : "No academic data available.";
+  const academicContext =
+    intelligence
+      ? JSON.stringify(
+          {
+            metrics:
+              intelligence.metrics,
+            intelligence:
+              intelligence.intelligence,
+          },
+          null,
+          2
+        )
+      : "No academic data available.";
 
   const systemPrompt = `
 You are the AI Study Assistant for an academic learning platform.
 
 Help students with:
 - Academic doubts
-- Programming concepts
+- Programming
 - Data Structures and Algorithms
-- Database concepts
+- DBMS
 - Operating Systems
 - Computer Networks
 - Software Engineering
 - Exam preparation
 - Study planning
 - Understanding mistakes
-- Academic performance guidance
 
 Rules:
 1. Explain concepts simply.
 2. Give examples when useful.
 3. For programming questions, explain the logic clearly.
-4. Do not invent facts or student scores.
+4. Do not invent academic scores.
 5. Use the academic context only when relevant.
 6. Be practical and student-friendly.
 7. Keep answers focused.
-8. Do not reveal private system information.
+8. Do not reveal system information.
 
-Student academic context:
+Current academic context:
 ${academicContext}
 `;
 
-  const contents = [
+  const messages = [
+    {
+      role: "system",
+      content: systemPrompt,
+    },
+    ...cleanConversation,
     {
       role: "user",
-      parts: [
-        {
-          text: systemPrompt,
-        },
-      ],
-    },
-    {
-      role: "model",
-      parts: [
-        {
-          text:
-            "Understood. I will help the student with academic learning and use the provided academic context when relevant.",
-        },
-      ],
+      content: message.trim(),
     },
   ];
 
-  for (const item of cleanConversation) {
-    contents.push({
-      role: item.role,
-      parts: [
-        {
-          text: item.content,
-        },
-      ],
-    });
-  }
-
-  contents.push({
-    role: "user",
-    parts: [
-      {
-        text: message.trim(),
-      },
-    ],
-  });
-
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+    `${baseUrl}/api/chat`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
       },
       body: JSON.stringify({
-        contents,
+        model,
+        stream: false,
+        messages,
+        options: {
+          temperature: 0.3,
+        },
       }),
     }
   );
@@ -129,23 +107,22 @@ ${academicContext}
 
   if (!response.ok) {
     console.error(
-      "Gemini Study Assistant error:",
+      "Ollama Study Assistant error:",
       data
     );
 
-    const errorMessage =
-      data?.error?.message ||
-      "Gemini API request failed";
-
-    throw new Error(errorMessage);
+    throw new Error(
+      data?.error ||
+        "Ollama API request failed"
+    );
   }
 
   const reply =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    data?.message?.content;
 
   if (!reply || !reply.trim()) {
     throw new Error(
-      "Gemini returned an empty response"
+      "Ollama returned an empty response"
     );
   }
 

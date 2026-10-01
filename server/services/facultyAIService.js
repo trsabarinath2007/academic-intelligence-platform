@@ -1,5 +1,5 @@
-const generateAcademicAIAnalysis = async (
-  intelligence
+const generateFacultyAIInsights = async (
+  analytics
 ) => {
   const baseUrl =
     process.env.OLLAMA_BASE_URL ||
@@ -15,13 +15,7 @@ const generateAcademicAIAnalysis = async (
       summary: {
         type: "string",
       },
-      strengths: {
-        type: "array",
-        items: {
-          type: "string",
-        },
-      },
-      concerns: {
+      keyConcerns: {
         type: "array",
         items: {
           type: "string",
@@ -33,13 +27,13 @@ const generateAcademicAIAnalysis = async (
           type: "string",
         },
       },
-      recommendations: {
+      suggestedFacultyActions: {
         type: "array",
         items: {
           type: "string",
         },
       },
-      priorityActions: {
+      teachingImprovementRecommendations: {
         type: "array",
         items: {
           type: "string",
@@ -48,49 +42,40 @@ const generateAcademicAIAnalysis = async (
     },
     required: [
       "summary",
-      "strengths",
-      "concerns",
+      "keyConcerns",
       "weakAreas",
-      "recommendations",
-      "priorityActions",
+      "suggestedFacultyActions",
+      "teachingImprovementRecommendations",
     ],
     additionalProperties: false,
   };
 
   const prompt = `
-You are an academic performance advisor.
+You are an AI academic analytics assistant for faculty.
 
-Analyze the student's academic intelligence data.
+Analyze the following backend-calculated class performance data.
 
-Important:
-- Backend-calculated numerical metrics are authoritative.
-- Do not invent scores or facts.
-- Do not change the calculated risk level.
-- Identify strengths, concerns and weak areas.
-- Provide practical recommendations.
-- Keep the response suitable for a college student.
-- Return only valid JSON matching the schema.
+The data contains:
+- Overall student statistics
+- GPA/performance data
+- Attendance
+- Quiz performance
+- Students needing improvement
+- At-risk students
+- Department analytics
 
-Student:
-${JSON.stringify(
-  intelligence.student,
-  null,
-  2
-)}
+IMPORTANT:
+- The provided numerical data is authoritative.
+- Do not invent students, scores, departments or statistics.
+- Do not change any provided numerical values.
+- Do not create unsupported conclusions.
+- Identify patterns visible in the supplied data.
+- Provide practical faculty actions.
+- Keep recommendations concise and useful.
+- Return only JSON matching the schema.
 
-Metrics:
-${JSON.stringify(
-  intelligence.metrics,
-  null,
-  2
-)}
-
-Academic Intelligence:
-${JSON.stringify(
-  intelligence.intelligence,
-  null,
-  2
-)}
+CLASS ANALYTICS:
+${JSON.stringify(analytics, null, 2)}
 `;
 
   const response = await fetch(
@@ -107,7 +92,7 @@ ${JSON.stringify(
           {
             role: "system",
             content:
-              "You are an expert academic performance advisor.",
+              "You are an expert academic analytics assistant for college faculty.",
           },
           {
             role: "user",
@@ -116,7 +101,7 @@ ${JSON.stringify(
         ],
         format: schema,
         options: {
-          temperature: 0,
+          temperature: 0.2,
         },
       }),
     }
@@ -126,13 +111,13 @@ ${JSON.stringify(
 
   if (!response.ok) {
     console.error(
-      "Ollama academic analysis error:",
+      "Ollama faculty AI error:",
       data
     );
 
     throw new Error(
       data?.error ||
-        "Ollama API request failed"
+        "Ollama faculty AI request failed"
     );
   }
 
@@ -141,7 +126,7 @@ ${JSON.stringify(
 
   if (!content) {
     throw new Error(
-      "Ollama returned an empty academic analysis"
+      "Ollama returned an empty faculty analysis"
     );
   }
 
@@ -151,18 +136,21 @@ ${JSON.stringify(
     parsed = JSON.parse(content);
   } catch (error) {
     console.error(
-      "Invalid Ollama academic JSON:",
+      "Invalid faculty AI JSON:",
       content
     );
 
     throw new Error(
-      "Ollama returned invalid academic analysis JSON"
+      "Ollama returned invalid faculty analysis JSON"
     );
   }
 
-  return parsed;
+  return {
+    ...parsed,
+    model,
+  };
 };
 
 module.exports = {
-  generateAcademicAIAnalysis,
+  generateFacultyAIInsights,
 };

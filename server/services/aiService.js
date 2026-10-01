@@ -4,15 +4,13 @@ const generateQuizWithAI = async ({
   difficulty,
   numberOfQuestions,
 }) => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  const model =
-    process.env.GEMINI_MODEL || "gemini-3.8-flash";
+  const baseUrl =
+    process.env.OLLAMA_BASE_URL ||
+    "http://localhost:11434";
 
-  if (!apiKey) {
-    throw new Error(
-      "GEMINI_API_KEY is not configured in .env"
-    );
-  }
+  const model =
+    process.env.OLLAMA_MODEL ||
+    "gemma3:4b";
 
   if (!subject || !topic || !difficulty) {
     throw new Error(
@@ -32,6 +30,56 @@ const generateQuizWithAI = async ({
     );
   }
 
+  const schema = {
+    type: "object",
+    properties: {
+      questions: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            question: {
+              type: "string",
+            },
+            options: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+              minItems: 4,
+              maxItems: 4,
+            },
+            correctAnswer: {
+              type: "integer",
+              minimum: 0,
+              maximum: 3,
+            },
+            explanation: {
+              type: "string",
+            },
+            difficulty: {
+              type: "string",
+            },
+            topic: {
+              type: "string",
+            },
+          },
+          required: [
+            "question",
+            "options",
+            "correctAnswer",
+            "explanation",
+            "difficulty",
+            "topic",
+          ],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ["questions"],
+    additionalProperties: false,
+  };
+
   const prompt = `
 You are an expert educational quiz generator.
 
@@ -41,84 +89,45 @@ Subject: ${subject}
 Topic: ${topic}
 Difficulty: ${difficulty}
 
-Requirements:
-- Each question must be relevant to the topic.
-- Questions must be educational and technically correct.
+Rules:
+- Generate exactly ${questionCount} questions.
+- Every question must be relevant to the specified topic.
 - Each question must have exactly 4 options.
-- correctAnswer must be the numeric index of the correct option:
+- correctAnswer must be:
   0 = first option
   1 = second option
   2 = third option
   3 = fourth option
 - Include a short explanation.
-- Include difficulty and topic.
+- Include the requested difficulty.
+- Include the requested topic.
+- Return only valid JSON matching the provided schema.
 `;
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+    `${baseUrl}/api/chat`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
       },
       body: JSON.stringify({
-        contents: [
+        model,
+        stream: false,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an expert educational quiz generator.",
+          },
           {
             role: "user",
-            parts: [
-              {
-                text: prompt,
-              },
-            ],
+            content: prompt,
           },
         ],
-
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              questions: {
-                type: "ARRAY",
-                items: {
-                  type: "OBJECT",
-                  properties: {
-                    question: {
-                      type: "STRING",
-                    },
-                    options: {
-                      type: "ARRAY",
-                      items: {
-                        type: "STRING",
-                      },
-                    },
-                    correctAnswer: {
-                      type: "INTEGER",
-                    },
-                    explanation: {
-                      type: "STRING",
-                    },
-                    difficulty: {
-                      type: "STRING",
-                    },
-                    topic: {
-                      type: "STRING",
-                    },
-                  },
-                  required: [
-                    "question",
-                    "options",
-                    "correctAnswer",
-                    "explanation",
-                    "difficulty",
-                    "topic",
-                  ],
-                },
-              },
-            },
-            required: ["questions"],
-          },
+        format: schema,
+        options: {
+          temperature: 0,
         },
       }),
     }
@@ -127,21 +136,23 @@ Requirements:
   const data = await response.json();
 
   if (!response.ok) {
-    console.error("Gemini API error:", data);
+    console.error(
+      "Ollama API error:",
+      data
+    );
 
-    const message =
-      data?.error?.message ||
-      "Gemini API request failed";
-
-    throw new Error(message);
+    throw new Error(
+      data?.error ||
+        "Ollama API request failed"
+    );
   }
 
   const content =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    data?.message?.content;
 
   if (!content) {
     throw new Error(
-      "Gemini returned an empty response"
+      "Ollama returned an empty response"
     );
   }
 
@@ -151,12 +162,12 @@ Requirements:
     parsed = JSON.parse(content);
   } catch (error) {
     console.error(
-      "Failed to parse Gemini JSON:",
+      "Invalid Ollama JSON:",
       content
     );
 
     throw new Error(
-      "Gemini returned invalid JSON"
+      "Ollama returned invalid JSON"
     );
   }
 
@@ -165,11 +176,14 @@ Requirements:
     !Array.isArray(parsed.questions)
   ) {
     throw new Error(
-      "Invalid quiz structure returned by Gemini"
+      "Invalid quiz structure returned by Ollama"
     );
   }
 
-  if (parsed.questions.length !== questionCount) {
+  if (
+    parsed.questions.length !==
+    questionCount
+  ) {
     throw new Error(
       `Expected ${questionCount} questions but received ${parsed.questions.length}`
     );
@@ -180,12 +194,14 @@ Requirements:
       !question.question ||
       !Array.isArray(question.options) ||
       question.options.length !== 4 ||
-      !Number.isInteger(question.correctAnswer) ||
+      !Number.isInteger(
+        question.correctAnswer
+      ) ||
       question.correctAnswer < 0 ||
       question.correctAnswer > 3
     ) {
       throw new Error(
-        "Gemini returned an invalid question format"
+        "Ollama returned an invalid question format"
       );
     }
   }
