@@ -69,7 +69,11 @@ const StudentAIAnalysis = () => {
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-green-600"></div>
 
           <p className="mt-4 text-gray-600">
-            Gemini is analyzing your academic performance...
+            Ollama is analyzing your academic performance...
+          </p>
+
+          <p className="mt-1 text-xs text-gray-400">
+            Powered by Gemma 3 4B
           </p>
         </div>
       </div>
@@ -127,31 +131,36 @@ const StudentAIAnalysis = () => {
           </h1>
 
           <p className="mt-2 text-gray-500">
-            Gemini has analyzed your academic activity
-            and generated personalized insights.
+            Your academic activity has been analyzed
+            using the local AI model.
           </p>
+
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700">
+            <span className="h-2 w-2 rounded-full bg-green-500"></span>
+            Ollama · Gemma 3 4B
+          </div>
         </div>
 
         {/* Metric Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <MetricCard
             title="Attendance"
-            value={`${metrics.attendancePercentage ?? 0}%`}
+            value={`${metrics.attendance?.attendancePercentage ?? 0}%`}
           />
 
           <MetricCard
             title="Assignments"
-            value={`${metrics.assignmentAveragePercentage ?? 0}%`}
+            value={`${metrics.assignments?.averagePercentage ?? 0}%`}
           />
 
           <MetricCard
             title="Quiz Average"
-            value={`${metrics.quizAveragePercentage ?? 0}%`}
+            value={`${metrics.quizzes?.averagePercentage ?? 0}%`}
           />
 
           <MetricCard
             title="Material Completion"
-            value={`${metrics.materialCompletionPercentage ?? 0}%`}
+            value={`${metrics.learningMaterials?.completionPercentage ?? 0}%`}
           />
 
           <MetricCard
@@ -235,11 +244,11 @@ const StudentAIAnalysis = () => {
 
             <div>
               <h2 className="text-xl font-semibold text-gray-800">
-                Gemini AI Summary
+                AI Academic Summary
               </h2>
 
               <p className="text-sm text-gray-500">
-                Personalized interpretation of your academic data
+                Generated locally using Gemma 3 4B
               </p>
             </div>
           </div>
