@@ -5,9 +5,17 @@ const {
   getMyAIAnalysis,
   studyAssistantChat,
   getFacultyAIInsights,
-} = require("../controllers/academicIntelligenceController");
+} = require(
+  "../controllers/academicIntelligenceController"
+);
 
-const discussionRoutes = require("./discussionRoutes");
+const discussionRoutes = require(
+  "./discussionRoutes"
+);
+
+const notificationRoutes = require(
+  "./notificationRoutes"
+);
 
 const {
   protect,
@@ -40,13 +48,21 @@ router.post(
 router.post(
   "/faculty/ai-insights",
   protect,
-  authorize("faculty", "admin"),
+  authorize(
+    "faculty",
+    "admin"
+  ),
   getFacultyAIInsights
 );
 
 router.use(
   "/discussion",
   discussionRoutes
+);
+
+router.use(
+  "/notifications",
+  notificationRoutes
 );
 
 module.exports = router;
